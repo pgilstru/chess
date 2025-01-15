@@ -35,4 +35,17 @@ public class ChessPosition {
     public int getColumn() {
         return col;
     }
+
+    // override equals() to specify that two positions are equal if they have the same row and col values
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        ChessPosition pos = (ChessPosition) object;
+        return row == pos.row && col == pos.col;
+    }
 }

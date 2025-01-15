@@ -7,7 +7,7 @@ package chess;
  * signature of the existing methods.
  */
 public class ChessBoard {
-    private ChessPiece[][] squares = new ChessPiece[9][9];
+    private final ChessPiece[][] squares = new ChessPiece[9][9];
     public ChessBoard() {
         
     }
