@@ -73,7 +73,7 @@ public class ChessPiece {
         // possible moves: {1, 1} {1, -1} {-1, 1} {-1, -1} ... {7, 7}
         // calculate board edge distance from piece
 
-        int[][] directions = {{1,1}, {-1,1}, {1,-1}, {-1,-1}};
+        int[][] directions = {{1,1}, {1,-1}, {-1,-1}, {-1,1}};
 
         for (int[] direction : directions) {
             int x = direction[0];
@@ -84,10 +84,8 @@ public class ChessPiece {
                 int cX = currPos.getRow();
                 int cY = currPos.getColumn();
 
-//                if (!(cX >= 0 && cX <= 7 && cY >= 0 && cY <= 7)) {
-//                    break; // break if out of bounds
-//                }
-                if (cX < 0 || cX > 7 || cY < 0 || cY > 7) {
+                if (cX <= 0 || cX > 8 || cY <= 0 || cY > 8) {
+                    System.out.println("Out of bounds!");
                     break; //break if out of bounds
                 }
 
@@ -102,8 +100,10 @@ public class ChessPiece {
                     // there is a piece blocking us from moving there
                     // if it belongs to our opponent, add it
                     if (targetPiece.getTeamColor() != pieceColor) {
+                        System.out.println("possible move (op): (" + cX + ", " + cY + ")");
                         possibleMoves.add(new ChessMove(myPosition, currPos, null));
                     }
+                    System.out.println("not possible move: (" + cX + ", " + cY + ")");
                     break; // stop further movement in this direction since there is a piece blocking
                 }
             }
