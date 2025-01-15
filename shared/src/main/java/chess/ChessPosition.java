@@ -16,6 +16,10 @@ public class ChessPosition {
         this.col = col;
     }
 
+    public ChessPosition update(int x, int y) {
+        return new ChessPosition(this.row + y, this.col + x);
+    }
+
     /**
      * @return which row this position is in
      * 1 codes for the bottom row
