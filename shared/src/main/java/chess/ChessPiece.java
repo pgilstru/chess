@@ -65,10 +65,30 @@ public class ChessPiece {
                 // calculate all the moves possible
                 bishopMoves(board, myPosition, possibleMoves);
                 break;
+            case KING:
+                kingMoves(board, myPosition, possibleMoves);
+                break;
+            case KNIGHT:
+                knightMoves(board, myPosition, possibleMoves);
+                break;
+            case PAWN:
+                pawnMoves(board, myPosition, possibleMoves);
+                break;
+            case QUEEN:
+                queenMoves(board, myPosition, possibleMoves);
+                break;
+            case ROOK:
+                rookMoves(board, myPosition, possibleMoves);
+                break;
         }
         return possibleMoves;
     }
 
+    /**
+     * Calculates all the positions a bishop piece can move to
+     * Does not take into account moves that are illegal due to leaving the king in danger
+     * Adds to the possibleMoves collection
+     */
     private void bishopMoves(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> possibleMoves){
         // possible moves: {1, 1} {1, -1} {-1, 1} {-1, -1} ... {7, 7}
         // calculate board edge distance from piece
