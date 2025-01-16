@@ -74,9 +74,9 @@ public class ChessPiece {
 //            case QUEEN:
 //                calculator = new QueenMovesCalculator();
 //                break;
-//            case ROOK:
-//                calculator = new RookMovesCalculator();
-//                break;
+            case ROOK:
+                calculator = new RookMovesCalculator();
+                break;
             default:
                 System.out.println("unrecognized piece: " + type);
         }
