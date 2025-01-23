@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 // !come back to later
-import static chess.ChessPiece.PieceType.QUEEN;
+import static chess.ChessPiece.PieceType.*;
+
 
 public class PawnMovesCalculator implements PieceMovesCalculator{
     @Override
@@ -27,7 +28,14 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
             // piece is white and starts on the close side of the board
             if (myRow == 2) {
                 // the pawn is in its starting position and can also move forward two spaces
-                directions = new int[][]{{1,0}, {1,-1}, {1,1}, {2,0}};
+//                directions = new int[][]{{1,0}, {1,-1}, {1,1}, {2,0}};
+                directions = new int[][]{{1,0}, {1,-1}, {1,1}};
+
+                ChessPosition oneForward = new ChessPosition(myRow + 1, myCol);
+                ChessPosition twoForward = new ChessPosition(myRow + 2, myCol);
+                if (board.getPiece(oneForward) == null && board.getPiece(twoForward) == null) {
+                    possibleMoves.add(new ChessMove(myPosition, twoForward, null));
+                }
             } else {
                 // pawn has already made its first move and can only move once forward
                 directions = new int[][]{{1,0}, {1,-1}, {1,1}};
@@ -36,7 +44,14 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
             // piece is black and starts on the far side of the board
             if (myRow == 7) {
                 // the pawn is in its starting position and can also move forward two spaces
-                directions = new int[][]{{-1, 0}, {-1, 1}, {-1, -1}, {-2,0}};
+//                directions = new int[][]{{-1, 0}, {-1, 1}, {-1, -1}, {-2,0}};
+                directions = new int[][]{{-1, 0}, {-1, 1}, {-1, -1}};
+
+                ChessPosition oneForward = new ChessPosition(myRow - 1, myCol);
+                ChessPosition twoForward = new ChessPosition(myRow - 2, myCol);
+                if (board.getPiece(oneForward) == null && board.getPiece(twoForward) == null) {
+                    possibleMoves.add(new ChessMove(myPosition, twoForward, null));
+                }
             } else {
                 // pawn has already made its first move and can only move once forward
                 directions = new int[][]{{-1, 0}, {-1, 1}, {-1, -1}};
@@ -60,13 +75,12 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                 if (targetPiece == null && currPos.getColumn() == myCol) {
                     // if a forward move doesn't have a piece blocking it
                     System.out.println("possible move: (" + x + ", " + y + ")");
-                    if (pieceColor == ChessGame.TeamColor.WHITE && myRow == 8) {
-// !                       ChessPiece.PieceType promotionPiece = QUEEN;
+                    if ((pieceColor == ChessGame.TeamColor.WHITE && x == 8) ||
+                    (pieceColor == ChessGame.TeamColor.BLACK && x == 1)) {
                         possibleMoves.add(new ChessMove(myPosition, currPos, QUEEN));
-                    }
-                    if (pieceColor == ChessGame.TeamColor.BLACK && myRow == 1) {
-//                        ChessPiece.PieceType promotionPiece = getPromotionPiece();
-                        possibleMoves.add(new ChessMove(myPosition, currPos, QUEEN));
+                        possibleMoves.add(new ChessMove(myPosition, currPos, ROOK));
+                        possibleMoves.add(new ChessMove(myPosition, currPos, BISHOP));
+                        possibleMoves.add(new ChessMove(myPosition, currPos, KNIGHT));
                     } else {
                         // forward move available and isn't the end of the board
                         possibleMoves.add(new ChessMove(myPosition, currPos, null));
@@ -75,9 +89,21 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                     // there is a piece blocking us from moving there
                     // if it is diagonal and belongs to our opponent, add it
                     if (targetPiece != null && currPos.getColumn() != myCol && targetPiece.getTeamColor() != pieceColor) {
-                        System.out.println("possible move (op): (" + x + ", " + y + ")");
-                        possibleMoves.add(new ChessMove(myPosition, currPos, null));
+                        if ((pieceColor == ChessGame.TeamColor.WHITE && x == 8) ||
+                        (pieceColor == ChessGame.TeamColor.BLACK && x == 1)) {
+                            //promotion capture moves
+                            possibleMoves.add(new ChessMove(myPosition, currPos, QUEEN));
+                            possibleMoves.add(new ChessMove(myPosition, currPos, ROOK));
+                            possibleMoves.add(new ChessMove(myPosition, currPos, BISHOP));
+                            possibleMoves.add(new ChessMove(myPosition, currPos, KNIGHT));
+                        } else {
+                            possibleMoves.add(new ChessMove(myPosition, currPos, null));
+                        }
                     }
+//                    if (targetPiece != null && currPos.getColumn() != myCol && targetPiece.getTeamColor() != pieceColor) {
+//                        System.out.println("possible move (op): (" + x + ", " + y + ")");
+//                        possibleMoves.add(new ChessMove(myPosition, currPos, null));
+//                    }
                     System.out.println("not possible move: (" + x + ", " + y + ")");
                 }
             }
