@@ -8,13 +8,16 @@ public class BishopMovesCalculator implements PieceMovesCalculator {
         ArrayList<ChessMove> possibleMoves = new ArrayList<>();
         int[][] directions = {{1,1}, {1,-1}, {-1,-1}, {-1,1}};
 
+        // for each direction check for a piece
+        // if there is a friendly piece, cannot move past it in that direction
         for (int[] direction : directions) {
             int x = direction[0];
             int y = direction[1];
             ChessPosition currPos = myPosition;
 
             while (true) {
-                currPos = currPos.update(x, y); //move one step in direction
+                // move further diagonal as long as there isn't a piece preventing it
+                currPos = currPos.update(x, y);
                 int cX = currPos.getRow();
                 int cY = currPos.getColumn();
 

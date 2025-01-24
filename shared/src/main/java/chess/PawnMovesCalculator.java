@@ -10,11 +10,10 @@ import static chess.ChessPiece.PieceType.*;
 public class PawnMovesCalculator implements PieceMovesCalculator{
     @Override
     public Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor pieceColor) {
-        // move forward one square if that square is unoccupied
+        // for each direction, check for a piece
+        // if there is NO piece one square in front, it is an option
+        // if there IS an enemy piece  forward diagonal {1,1} or {-1,1}, it is an option
         // if it is the first time that pawn is being moved, it can move forward 2 squares
-        // if blocked, cannot move
-        // capture forward diagonally {1,1} or {-1,1}
-        // only move diagonal if capturing enemy piece
         // when they move to the end of the board (row 8 for white and row 1 for black), they get promoted
         // and can be replaced with player's choice of Rook, Knight, Bishop, or Queen
 
@@ -26,43 +25,29 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
 
         if (pieceColor == ChessGame.TeamColor.WHITE){
             // piece is white and starts on the close side of the board
+            directions = new int[][]{{1,0}, {1,-1}, {1,1}};
             if (myRow == 2) {
                 // the pawn is in its starting position and can also move forward two spaces
-//                directions = new int[][]{{1,0}, {1,-1}, {1,1}, {2,0}};
-                directions = new int[][]{{1,0}, {1,-1}, {1,1}};
-
                 ChessPosition oneForward = new ChessPosition(myRow + 1, myCol);
                 ChessPosition twoForward = new ChessPosition(myRow + 2, myCol);
                 if (board.getPiece(oneForward) == null && board.getPiece(twoForward) == null) {
                     possibleMoves.add(new ChessMove(myPosition, twoForward, null));
                 }
-            } else {
-                // pawn has already made its first move and can only move once forward
-                directions = new int[][]{{1,0}, {1,-1}, {1,1}};
             }
         } else {
             // piece is black and starts on the far side of the board
+            directions = new int[][]{{-1, 0}, {-1, 1}, {-1, -1}};
             if (myRow == 7) {
                 // the pawn is in its starting position and can also move forward two spaces
-//                directions = new int[][]{{-1, 0}, {-1, 1}, {-1, -1}, {-2,0}};
-                directions = new int[][]{{-1, 0}, {-1, 1}, {-1, -1}};
-
                 ChessPosition oneForward = new ChessPosition(myRow - 1, myCol);
                 ChessPosition twoForward = new ChessPosition(myRow - 2, myCol);
                 if (board.getPiece(oneForward) == null && board.getPiece(twoForward) == null) {
                     possibleMoves.add(new ChessMove(myPosition, twoForward, null));
                 }
-            } else {
-                // pawn has already made its first move and can only move once forward
-                directions = new int[][]{{-1, 0}, {-1, 1}, {-1, -1}};
             }
         }
 
-        // for each direction, check for a piece
-        // if there is a piece then you cannot move forward
-        // check for a piece to the right and left of each direction
-        // if there is a piece, check if it is friendly or opponent
-        // if it is an opponent, it is an option
+        // if there is an opponent piece, it is an option
         for (int[] direction : directions) {
             int x = myPosition.getRow() + direction[0];
             int y = myPosition.getColumn() + direction[1];
@@ -100,10 +85,6 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                             possibleMoves.add(new ChessMove(myPosition, currPos, null));
                         }
                     }
-//                    if (targetPiece != null && currPos.getColumn() != myCol && targetPiece.getTeamColor() != pieceColor) {
-//                        System.out.println("possible move (op): (" + x + ", " + y + ")");
-//                        possibleMoves.add(new ChessMove(myPosition, currPos, null));
-//                    }
                     System.out.println("not possible move: (" + x + ", " + y + ")");
                 }
             }

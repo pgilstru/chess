@@ -12,15 +12,15 @@ public class RookMovesCalculator implements PieceMovesCalculator{
         int[][] directions = {{0,1}, {1,0}, {-1,0}, {0,-1}};
 
         // for each direction, check for a piece
-        // if there is a piece, and it is friendly, it is not an option
-        // if there is a piece, and it is opponent, you can capture it but further moves in that direction aren't allowed
+        // if there is a piece, and it is opponent, you can capture it but not move further in that direction
         for (int[] direction : directions) {
             int x = direction[0];
             int y = direction[1];
             ChessPosition currPos = myPosition;
 
             while (true) {
-                currPos = currPos.update(x, y); //move one step in direction
+                // move further sideways or forward as long as there isn't a piece preventing it
+                currPos = currPos.update(x, y);
                 int cX = currPos.getRow();
                 int cY = currPos.getColumn();
 

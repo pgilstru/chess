@@ -9,10 +9,8 @@ public class KingMovesCalculator implements PieceMovesCalculator {
         // moves left/right first then up/down
         int[][] directions = {{0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}};
 
-        // as long as there isn't a friendly piece, it is an option
         // for each direction, check for a piece
-        // if there is a piece then check if it is friendly or opponent
-        // if it is friendly, it is not an option
+        // if there is a friendly piece, it is not an option
         for (int[] direction : directions) {
             int x = myPosition.getRow() + direction[0];
             int y = myPosition.getColumn() + direction[1];

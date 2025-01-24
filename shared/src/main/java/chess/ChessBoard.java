@@ -22,7 +22,7 @@ public class ChessBoard {
 
     private final ChessPiece[][] squares = new ChessPiece[9][9];
     public ChessBoard() {
-        // just initializes empty board, resetboard does the rest
+        // just initializes empty board, reset board does the rest
     }
 
     /**
@@ -65,38 +65,28 @@ public class ChessBoard {
         int column = 1;
         for (var c : defaultBoard.toCharArray()) {
             switch (c) {
-//                case '\n':
-//                    // if new line, move to next row
-//                    column = 1;
-//                    row--;
-//                    break;
-//                case ' ':
-//                    // empty square, move to next column
-//                    column++;
-//                    break;
-//                case '|':
-//                    // ignore pipe
-//                    break;
                 case '\n' -> {
+                    // if new line, move to next row
                     column = 1;
                     row--;
                 }
-                case ' ' -> column++;
+                case ' ' -> column++; // empty square, move to next column
                 case '|' -> {
+                    // ignore formatting pipe
                 }
                 default -> {
                     if (row < 1 || row > 8 || column < 1 || column > 8) {
                         throw new IllegalStateException("row/column out of bounds");
                     }
 
-                    // verify color
+                    // verify color matches with appearance on board
                     ChessGame.TeamColor color = Character.isLowerCase(c) ? ChessGame.TeamColor.BLACK
                             : ChessGame.TeamColor.WHITE;
 
                     // find type
                     ChessPiece.PieceType type = CHAR_TO_TYPE_MAP.get(Character.toLowerCase(c));
 
-                    // create piece
+                    // create a piece
                     ChessPosition position = new ChessPosition(row, column);
                     ChessPiece piece = new ChessPiece(color, type);
 

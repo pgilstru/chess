@@ -9,12 +9,10 @@ public class KnightMovesCalculator implements PieceMovesCalculator{
         // move in an L shape, moving 2 squares in one direction and 1 square in the other direction.
         // can ignore pieces in the in-between squares (they can "jump" over other pieces)
         ArrayList<ChessMove> possibleMoves = new ArrayList<>();
-        // moves left/right first then up/down
         int[][] directions = {{1,2}, {2,1}, {2,-1}, {1,-2}, {-1,-2}, {-2,-1}, {-2,1}, {-1,2}};
 
         // for each direction, check for a piece at the END of the L shape
-        // if there is a piece then check if it is friendly or opponent
-        // if it is friendly, it is not an option
+        // if it is a friendly piece, it is not an option
         for (int[] direction : directions) {
             int x = myPosition.getRow() + direction[0];
             int y = myPosition.getColumn() + direction[1];
