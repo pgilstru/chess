@@ -47,14 +47,18 @@ public class ChessMove {
 
     // override equals() to specify that two objects are equal if both the start and end positions are equal
     @Override
-    public boolean equals(Object object) {
-        if (this == object) {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if (object == null || getClass() != object.getClass()) {
+        if (!(o instanceof ChessMove chessMove)) {
             return false;
         }
-        ChessMove mov = (ChessMove) object;
-        return Objects.equals(startPosition, mov.startPosition) && Objects.equals(endPosition, mov.endPosition);
+        return Objects.equals(startPosition, chessMove.startPosition) && Objects.equals(endPosition, chessMove.endPosition) && promotionPiece == chessMove.promotionPiece;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startPosition, endPosition, promotionPiece);
     }
 }

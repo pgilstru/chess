@@ -1,5 +1,7 @@
 package chess;
 
+import java.util.Objects;
+
 /**
  * Represents a single square position on a chess board
  * <p>
@@ -38,14 +40,15 @@ public class ChessPosition {
 
     // override equals() to specify that two positions are equal if they have the same row and col values
     @Override
-    public boolean equals(Object object) {
-        if (this == object) {
-            return true;
-        }
-        if (object == null || getClass() != object.getClass()) {
+    public boolean equals(Object o) {
+        if (!(o instanceof ChessPosition that)) {
             return false;
         }
-        ChessPosition pos = (ChessPosition) object;
-        return row == pos.row && col == pos.col;
+        return row == that.row && col == that.col;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(row, col);
     }
 }
