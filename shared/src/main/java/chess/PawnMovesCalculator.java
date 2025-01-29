@@ -57,7 +57,8 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                 ChessPosition currPos = new ChessPosition(x, y);
                 ChessPiece targetPiece = board.getPiece(currPos);
 
-                if (targetPiece == null && currPos.getColumn() == myCol) {
+                if ((targetPiece == null && y == myCol) ||
+                        (targetPiece != null && y != myCol && targetPiece.getTeamColor() != pieceColor)) {
                     // if a forward move doesn't have a piece blocking it
                     System.out.println("possible move: (" + x + ", " + y + ")");
                     if ((pieceColor == ChessGame.TeamColor.WHITE && x == 8) ||
@@ -70,23 +71,8 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                         // forward move available and isn't the end of the board
                         possibleMoves.add(new ChessMove(myPosition, currPos, null));
                     }
-                } else {
-                    // there is a piece blocking us from moving there
-                    // if it is diagonal and belongs to our opponent, add it
-                    if (targetPiece != null && currPos.getColumn() != myCol && targetPiece.getTeamColor() != pieceColor) {
-                        if ((pieceColor == ChessGame.TeamColor.WHITE && x == 8) ||
-                        (pieceColor == ChessGame.TeamColor.BLACK && x == 1)) {
-                            //promotion capture moves
-                            possibleMoves.add(new ChessMove(myPosition, currPos, QUEEN));
-                            possibleMoves.add(new ChessMove(myPosition, currPos, ROOK));
-                            possibleMoves.add(new ChessMove(myPosition, currPos, BISHOP));
-                            possibleMoves.add(new ChessMove(myPosition, currPos, KNIGHT));
-                        } else {
-                            possibleMoves.add(new ChessMove(myPosition, currPos, null));
-                        }
-                    }
-                    System.out.println("not possible move: (" + x + ", " + y + ")");
                 }
+                System.out.println("not possible move: (" + x + ", " + y + ")");
             }
         }
         return possibleMoves;
