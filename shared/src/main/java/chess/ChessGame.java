@@ -39,14 +39,29 @@ public class ChessGame {
     }
 
     /**
-     * Gets a valid moves for a piece at the given location
+     * Gets valid moves for a piece at the given location
      *
      * @param startPosition the piece to get valid moves for
      * @return Set of valid moves for requested piece, or null if no piece at
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = getBoard().getPiece(startPosition);
+
+        // check for piece at startPosition
+        if (piece != null) {
+            // there is a piece, get possible moves
+            Collection<ChessMove> possibleMoves = piece.pieceMoves(getBoard(), startPosition);
+
+            // remove any moves that leave king in check
+            TeamColor pieceColor = piece.getTeamColor();
+            boolean kingInCheck = isInCheck(pieceColor);
+            while (kingInCheck) {
+                // check if certain moves leave him in check and remove them until no more leave him in check?
+            }
+        } else {
+            System.out.println("piece is null");
+        }
     }
 
     /**
