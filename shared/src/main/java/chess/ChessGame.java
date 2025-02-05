@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -9,6 +10,8 @@ import java.util.Collection;
  * signature of the existing methods.
  */
 public class ChessGame {
+
+    private ChessBoard board;
 
     public ChessGame() {
 
@@ -49,19 +52,27 @@ public class ChessGame {
         ChessPiece piece = getBoard().getPiece(startPosition);
 
         // check for piece at startPosition
-        if (piece != null) {
-            // there is a piece, get possible moves
-            Collection<ChessMove> possibleMoves = piece.pieceMoves(getBoard(), startPosition);
-
-            // remove any moves that leave king in check
-            TeamColor pieceColor = piece.getTeamColor();
-            boolean kingInCheck = isInCheck(pieceColor);
-            while (kingInCheck) {
-                // check if certain moves leave him in check and remove them until no more leave him in check?
-            }
-        } else {
-            System.out.println("piece is null");
+        if (piece == null) {
+            return null;
         }
+        // there is a piece, get possible moves
+        Collection<ChessMove> possibleMoves = piece.pieceMoves(getBoard(), startPosition);
+        ArrayList<ChessMove> validMoves = new ArrayList<>(possibleMoves);
+
+        // remove any moves that leave king in check
+        TeamColor pieceColor = piece.getTeamColor();
+        for (ChessMove move : possibleMoves) {
+            ChessBoard boardCopy = getBoard();
+            // apply move to copy of the board
+            boardCopy.addPiece(move.getEndPosition(), piece);
+            // check if king is in check now
+            if (isInCheck(pieceColor)) {
+                // remove it from the valid moves
+                validMoves.remove(move);
+            }
+        }
+
+        return validMoves;
     }
 
     /**
@@ -111,7 +122,7 @@ public class ChessGame {
      * @param board the new board to use
      */
     public void setBoard(ChessBoard board) {
-        throw new RuntimeException("Not implemented");
+        this.board = board;
     }
 
     /**
@@ -120,6 +131,6 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-        throw new RuntimeException("Not implemented");
+        return board;
     }
 }
