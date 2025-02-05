@@ -30,7 +30,12 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        throw new RuntimeException("Not implemented");
+        if (team == TeamColor.WHITE) {
+            team = TeamColor.BLACK;
+        } else {
+            team = TeamColor.WHITE;
+        }
+        return team;
     }
 
     /**
@@ -93,6 +98,9 @@ public class ChessGame {
      */
     public boolean isInCheck(TeamColor teamColor) {
         throw new RuntimeException("Not implemented");
+        // get the pieces on the board for the opposite team
+        // for each piece, get all of its possible moves
+        // for each move, check if our team's king is in check
     }
 
     /**
@@ -103,6 +111,7 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         throw new RuntimeException("Not implemented");
+
     }
 
     /**
