@@ -12,16 +12,17 @@ import java.util.Collection;
 public class ChessGame {
 
     private ChessBoard board;
+    private TeamColor teamTurn;
 
     public ChessGame() {
-
+        this.teamTurn = TeamColor.WHITE; // white is starting team
     }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        throw new RuntimeException("Not implemented");
+        return teamTurn;
     }
 
     /**
@@ -30,12 +31,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        if (team == TeamColor.WHITE) {
-            team = TeamColor.BLACK;
-        } else {
-            team = TeamColor.WHITE;
-        }
-        return team;
+        this.teamTurn = team;
     }
 
     /**
@@ -67,14 +63,18 @@ public class ChessGame {
         // remove any moves that leave king in check
         TeamColor pieceColor = piece.getTeamColor();
         for (ChessMove move : possibleMoves) {
-            ChessBoard boardCopy = getBoard();
-            // apply move to copy of the board
-            boardCopy.addPiece(move.getEndPosition(), piece);
+            // temporarily apply move to the board
+            board.addPiece(move.getEndPosition(), piece);
+            board.addPiece(move.getStartPosition(), null);
             // check if king is in check now
             if (isInCheck(pieceColor)) {
                 // remove it from the valid moves
                 validMoves.remove(move);
             }
+
+            // undo temporary move
+            board.addPiece(move.getStartPosition(), piece);
+            board.addPiece(move.getEndPosition(), null);
         }
 
         return validMoves;
@@ -87,7 +87,27 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(move.getStartPosition());
+
+        if (piece == null) {
+            throw new InvalidMoveException("piece is null");
+        } else if (piece.getTeamColor() != getTeamTurn()) {
+            throw new InvalidMoveException("not your turn");
+        }
+
+        Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
+
+        if (validMoves == null || !validMoves.contains(move)) {
+            // not a valid move
+            throw new InvalidMoveException("not a valid move");
+        }
+
+        // add piece to new pos and remove it from old pos
+        board.addPiece(move.getEndPosition(), piece);
+        board.addPiece(move.getStartPosition(), null);
+
+        // switch team turns
+        setTeamTurn(teamTurn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
     }
 
     /**
