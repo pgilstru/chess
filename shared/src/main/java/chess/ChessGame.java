@@ -123,12 +123,35 @@ public class ChessGame {
 
         // find king's position
         ChessPosition king = getKing(teamColor);
-        TeamColor opColor = (teamColor == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
-        // go through other teams possible moves and see if any hit our king?
-//        ArrayList<ChessMove> validMoves = new ArrayList<>(possibleMoves);
-//        for (ChessPiece piece : getBoard()){
-//
-//        }
+        if (king == null) {
+            throw new RuntimeException("invalid board... no king found");
+        }
+        TeamColor opColor = ((teamColor == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE);
+        // go through other teams pieces then those possible moves and see if any hit our king?
+        for (int row = 1; row<= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                // iterate to find other team's pieces
+                ChessPosition currPos = new ChessPosition(row, col);
+                ChessPiece currPiece = board.getPiece(currPos);
+                // if piece belongs to op
+                if (currPiece != null && currPiece.getTeamColor() == opColor) {
+                    // get posssible moves
+                    Collection<ChessMove> possibleMoves = currPiece.pieceMoves(getBoard(), currPos);
+                    // check if any of the possibleMoves go to the king's position
+                    for (ChessMove move : possibleMoves) {
+                        if (move.getEndPosition() == king) {
+                            // the king is in check
+                            return true;
+                        } else {
+                            // king is not in check
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        // king is not in check
+        return false;
     }
 
     public ChessPosition getKing(TeamColor teamColor) {
@@ -143,6 +166,8 @@ public class ChessGame {
                 }
             }
         }
+        // if for some reason the board is invalid, return null
+        return null;
     }
 
     /**
