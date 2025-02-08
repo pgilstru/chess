@@ -16,6 +16,7 @@ public class ChessGame {
 
     public ChessGame() {
         this.teamTurn = TeamColor.WHITE; // white is starting team
+        this.board = new ChessBoard(); // initialize board
     }
 
     /**
@@ -56,25 +57,28 @@ public class ChessGame {
         if (piece == null) {
             return null;
         }
+
         // there is a piece, get possible moves
         Collection<ChessMove> possibleMoves = piece.pieceMoves(getBoard(), startPosition);
-        ArrayList<ChessMove> validMoves = new ArrayList<>(possibleMoves);
+        ArrayList<ChessMove> validMoves = new ArrayList<>();
 
-        // remove any moves that leave king in check
+        // add any moves that don't leave king in check
         TeamColor pieceColor = piece.getTeamColor();
         for (ChessMove move : possibleMoves) {
+            ChessPiece captured = board.getPiece(move.getEndPosition());
+
             // temporarily apply move to the board
             board.addPiece(move.getEndPosition(), piece);
             board.addPiece(move.getStartPosition(), null);
-            // check if king is in check now
-            if (isInCheck(pieceColor)) {
-                // remove it from the valid moves
-                validMoves.remove(move);
+
+            if (!isInCheck(pieceColor)) {
+                // king not in check, add it to valid moves
+                validMoves.add(move);
             }
 
-            // undo temporary move
+            // undo temporary move aka put board back
             board.addPiece(move.getStartPosition(), piece);
-            board.addPiece(move.getEndPosition(), null);
+            board.addPiece(move.getEndPosition(), captured);
         }
 
         return validMoves;
@@ -100,6 +104,13 @@ public class ChessGame {
         if (validMoves == null || !validMoves.contains(move)) {
             // not a valid move
             throw new InvalidMoveException("not a valid move");
+        }
+
+        // check if move is a promotion move
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN &&
+                (move.getEndPosition().getRow() == 8 || move.getEndPosition().getRow() == 1)) {
+            ChessPiece.PieceType promoType = move.getPromotionPiece() != null ? move.getPromotionPiece() : ChessPiece.PieceType.QUEEN;
+            piece = new ChessPiece(piece.getTeamColor(), promoType);
         }
 
         // add piece to new pos and remove it from old pos
@@ -139,13 +150,8 @@ public class ChessGame {
                     Collection<ChessMove> possibleMoves = currPiece.pieceMoves(getBoard(), currPos);
                     // check if any of the possibleMoves go to the king's position
                     for (ChessMove move : possibleMoves) {
-                        if (move.getEndPosition() == king) {
-                            // the king is in check
-                            return true;
-                        } else {
-                            // king is not in check
-                            return false;
-                        }
+                        // return if the king is in check
+                        return move.getEndPosition() == king;
                     }
                 }
             }
@@ -177,8 +183,35 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // when a king is in check and has no legal moves to escape
+        // first, check if the king is in check
+        // next, check if the king has any legal moves to escape
+        if (isInCheck(teamColor)) {
+            // find all possible moves for the team
+            for (int row = 1; row <= 8; row++) {
+                for (int col = 1; col <= 8; col++) {
+                    ChessPosition currPos = new ChessPosition(row, col);
+                    ChessPiece currPiece = board.getPiece(currPos);
 
+                    if (currPiece != null && currPiece.getTeamColor() == teamColor) {
+                        // piece belongs to your team, see if it has any valid moves (aka can save king)
+                        Collection<ChessMove> possibleMoves = validMoves(currPos);
+
+                        // if there is at least one valid move, it is not in checkmate
+//                        if (possibleMoves != null && !possibleMoves.isEmpty()) {
+                        if (!possibleMoves.isEmpty()) {
+                            // no possible moves, it is in checkmate
+                            return false;
+                        }
+
+                    }
+
+                }
+            }
+            return true;
+        }
+        // king not in check, so checkmate is impossible
+        return false;
     }
 
     /**
@@ -189,7 +222,30 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // return true if the king not in check and they have no legal moves left
+        if (isInCheck(teamColor)){
+            return false;
+        }
+
+        // see if any pieces for the given team have any moves left
+        for (int row = 1; row<= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition currPos = new ChessPosition(row, col);
+                ChessPiece currPiece = board.getPiece(currPos);
+
+                if (currPiece != null && currPiece.getTeamColor() == teamColor) {
+                    // get possible moves
+                    Collection<ChessMove> possibleMoves = validMoves(currPos);
+
+                    // if any piece has a valid move, return false
+                    if (!possibleMoves.isEmpty()){
+                        return false;
+                    }
+                }
+            }
+        }
+        // no valid moves found... in stalemate
+        return true;
     }
 
     /**
