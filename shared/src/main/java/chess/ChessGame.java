@@ -197,26 +197,8 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        // first, check if the king is in check to see if checkmate is possible
-        if (!isInCheck(teamColor)) {
-            return false;
-        }
-
-        // next, check if the king has any legal moves to escape
-        for (ChessPosition currPos : findAllPositions()) {
-            ChessPiece currPiece = board.getPiece(currPos);
-
-            if (currPiece != null && currPiece.getTeamColor() == teamColor) {
-                // piece is on your team, see if it has any valid moves (aka can save king)
-                Collection<ChessMove> possibleMoves = validMoves(currPos);
-
-                if (!possibleMoves.isEmpty()) {
-                    // if it has a possible/valid move, it is not in checkmate
-                    return false;
-                }
-            }
-        }
-        return true;
+        // return true if the king is in check and there are no legal moves left
+        return isInCheck(teamColor) && !hasMovesLeft(teamColor);
     }
 
     /**
@@ -227,27 +209,27 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        // return true if the king not in check and they have no legal moves left
-        if (isInCheck(teamColor)){
-            return false;
-        }
+        // return true if the king is not in check and there are no legal moves left
+        return !isInCheck(teamColor) && !hasMovesLeft(teamColor);
+    }
 
-        // see if any pieces for the given team have any moves left
+    private boolean hasMovesLeft(TeamColor teamColor) {
+        // see if any pieces for the given team have any legal moves left
         for (ChessPosition currPos : findAllPositions()) {
             ChessPiece currPiece = board.getPiece(currPos);
 
             if (currPiece != null && currPiece.getTeamColor() == teamColor) {
-                // get possible moves
+                // check if any pieces have valid moves
                 Collection<ChessMove> possibleMoves = validMoves(currPos);
 
-                // if any piece has a valid move, return false
+                // found valid move
                 if (!possibleMoves.isEmpty()){
-                    return false;
+                    return true;
                 }
             }
         }
-        // no valid moves found... in stalemate
-        return true;
+        // no valid moves found
+        return false;
     }
 
     /**
