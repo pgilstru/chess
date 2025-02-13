@@ -31,14 +31,11 @@ public class RookMovesCalculator implements PieceMovesCalculator{
                     if (targetPiece == null) {
                         System.out.println("possible move: (" + x + ", " + y + ")");
                         possibleMoves.add(new ChessMove(myPosition, currPos, null));
+                    } else if (targetPiece.getTeamColor() != pieceColor) {
+                        System.out.println("possible move (op): (" + x + ", " + y + ")");
+                        possibleMoves.add(new ChessMove(myPosition, currPos, null));
+                        break;
                     } else {
-                        // there is a piece blocking us from moving there
-                        // if it belongs to our opponent, add it
-                        if (targetPiece.getTeamColor() != pieceColor) {
-                            System.out.println("possible move (op): (" + x + ", " + y + ")");
-                            possibleMoves.add(new ChessMove(myPosition, currPos, null));
-                        }
-                        System.out.println("not possible move: (" + x + ", " + y + ")");
                         break;
                     }
                 } else {

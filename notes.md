@@ -10,3 +10,10 @@ Here are my notes :)
    ```git commit -m "message here"```
 3. Push changes
    ```git push```
+
+
+
+## Chess UML Sequence Diagram
+
+![chessSequenceDiagram](ChessSequenceDiagram.png)
+

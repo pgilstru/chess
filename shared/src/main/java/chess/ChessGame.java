@@ -1,6 +1,5 @@
 package chess;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
@@ -198,7 +197,7 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         // return true if the king is in check and there are no legal moves left
-        return isInCheck(teamColor) && !hasMovesLeft(teamColor);
+        return isInCheck(teamColor) && hasNoMovesLeft(teamColor);
     }
 
     /**
@@ -210,10 +209,10 @@ public class ChessGame {
      */
     public boolean isInStalemate(TeamColor teamColor) {
         // return true if the king is not in check and there are no legal moves left
-        return !isInCheck(teamColor) && !hasMovesLeft(teamColor);
+        return !isInCheck(teamColor) && hasNoMovesLeft(teamColor);
     }
 
-    private boolean hasMovesLeft(TeamColor teamColor) {
+    private boolean hasNoMovesLeft(TeamColor teamColor) {
         // see if any pieces for the given team have any legal moves left
         for (ChessPosition currPos : findAllPositions()) {
             ChessPiece currPiece = board.getPiece(currPos);
@@ -224,12 +223,12 @@ public class ChessGame {
 
                 // found valid move
                 if (!possibleMoves.isEmpty()){
-                    return true;
+                    return false;
                 }
             }
         }
         // no valid moves found
-        return false;
+        return true;
     }
 
     /**
