@@ -1,4 +1,9 @@
-package chess;
+package chess.piece;
+import chess.ChessBoard;
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
+
 import java.util.Collection;
 
 public interface PieceMovesCalculator {

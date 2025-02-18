@@ -1,9 +1,10 @@
-package chess;
+package chess.piece;
+
+import chess.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-// !come back to later
 import static chess.ChessPiece.PieceType.*;
 
 
