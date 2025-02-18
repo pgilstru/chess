@@ -15,5 +15,5 @@ Here are my notes :)
 
 ## Chess UML Sequence Diagram
 
-![chessSequenceDiagram](ChessSequenceDiagram.png)
+![chessSequenceDiagram](ChessSequenceDiagram2.png)
 
