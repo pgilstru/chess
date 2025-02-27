@@ -40,3 +40,4 @@ Data Model Classes:
 - GameData
 - AuthData
 
+! ended at request and result classes!
