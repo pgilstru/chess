@@ -2,7 +2,7 @@ package dataaccess;
 
 import model.GameData;
 
-import java.util.Collection;
+import java.util.List;
 
 public interface GameDAO {
     // A method for clearing all data from the database.
@@ -20,7 +20,7 @@ public interface GameDAO {
     // Retrieve all games.
     // DataAccessException is thrown if the data can't be accessed (for any reason)
 // possibly change this to a list instead of collection??
-    Collection<GameData> listGames() throws DataAccessException;
+    List<GameData> listGames() throws DataAccessException;
 
     // Updates a chess game.
     // DataAccessException is thrown if the data can't be accessed (for any reason)
