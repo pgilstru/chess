@@ -2,7 +2,6 @@ package dataaccess.memory;
 
 import dataaccess.GameDAO;
 import dataaccess.DataAccessException;
-import model.AuthData;
 import model.GameData;
 import java.util.List;
 import java.util.ArrayList;
@@ -15,7 +14,7 @@ public class MemoryGameDAO implements GameDAO {
 
     @Override
     public void clear() {
-        // A method for clearing all data from the database.
+        // A method for clearing all game data from the database.
         games.clear();
     }
 

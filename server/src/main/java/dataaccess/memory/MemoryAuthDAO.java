@@ -16,7 +16,7 @@ public class MemoryAuthDAO implements AuthDAO{
 
     @Override
     public void clear() {
-        // A method for clearing all data from the database.
+        // A method for clearing all auth data from the database.
         authTokens.clear();
     }
 
