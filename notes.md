@@ -25,7 +25,25 @@ Inside of server/src/main/java/Main.java in the main method, create a Server obj
 
 ### Implementation order
 1. [x] Set up your starter code so that your server runs properly, and make sure the testing webpage loads.
-2. [ ] Use your sequence diagrams and the class diagram at the top of this page to guide the decision for what classes you might need.
+2. [x] Use your sequence diagrams and the class diagram at the top of this page to guide the decision for what classes you might need.
+   - Data Model Classes:
+     - UserData
+     - GameData
+     - AuthData
+   - Data Access Classes:
+     - UserDAO
+       - Methods: clear(), getUser(username), createUser(userData)
+     - GameDAO
+       - Methods: clear(), getGame(gameID), createGame(gameData), listGames(), updateGame(gameData)
+     - AuthDAO
+       - Methods: clear(), getAuth(authToken), createAuth(authData), deleteAuth(authToken)
+   - Service Classes:
+     - ClearService
+       - Covers: clear()
+     - GameService
+       - Covers: create(), join(), list()
+     - UserService
+       - Covers: register(), login(), logout()
 3. [ ] Create packages for where these classes will go, if you haven't already done so.
 4. [ ] Pick one Web API endpoint and get it working end-to-end. We recommend starting with clear or register.
    1. [ ] Create the classes you need to implement the endpoint.
@@ -41,3 +59,12 @@ Data Model Classes:
 - AuthData
 
 ! ended at request and result classes!
+
+
+# References: 
+
+## Phase 3:
+
+https://www.uuidgenerator.net/dev-corner/java
+
+https://www.w3schools.com/java/java_hashmap.asp
