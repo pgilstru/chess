@@ -59,6 +59,8 @@ Data Model Classes:
 - AuthData
 
 ! ended at request and result classes!
+! still need to store passwords not in plain text!
+! change argument exceptions to be better
 
 
 # References: 

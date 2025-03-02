@@ -20,7 +20,7 @@ public class UserService {
         try {
             // verify userData isn't empty
             if (userData == null) {
-                throw new IllegalArgumentException("input must not be null");
+                throw new IllegalArgumentException("register input must not be null");
             }
 
             // verify username doesn't already exist
@@ -37,15 +37,56 @@ public class UserService {
             // actually create the user
             userDAO.createUser(user);
 
-            // create authData
+            // create new authData
             AuthData authData = AuthData.generateNewAuthData(username);
+            authDAO.createAuth(authData);
 
-
+            return authData;
         } catch (DataAccessException e) {
             throw new RuntimeException(e);
         }
     }
 
 //    public LoginResult login(LoginRequest loginRequest) {}
+    public AuthData login(UserData userData) {
+        try {
+            // verify userData isn't empty
+            if (userData == null) {
+                throw new IllegalArgumentException("login input must not be null");
+            }
+
+            String username = userData.username();
+            UserData currUser = userDAO.getUser(username);
+
+            // verify user exists and compare entered password to password stored
+            if (currUser == null || !userData.password().equals(currUser.password())) {
+                // say username or password to be more secure
+                throw new IllegalArgumentException("username or password is incorrect");
+            }
+
+            // create new authData
+            AuthData authData = AuthData.generateNewAuthData(username);
+            authDAO.createAuth(authData);
+
+            return authData;
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 //    public void logout(LogoutRequest logoutRequest) {}
+    public void logout(String authToken) {
+        try {
+            // verify user is authenticated before logging out
+            if (authDAO.getAuth(authToken) == null) {
+                throw new IllegalArgumentException("Must be authenticated to logout");
+            }
+
+            // delete authToken
+            authDAO.deleteAuth(authToken);
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
