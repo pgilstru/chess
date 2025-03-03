@@ -8,6 +8,9 @@ import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GameService {
     private GameDAO gameDAO;
     private AuthDAO authDAO;
@@ -78,4 +81,18 @@ public class GameService {
     }
 
     // public ListResult list(ListRequest listRequest) {}
+    public ArrayList list(String authToken) {
+        try {
+            // verify user is authenticated first
+            if (authDAO.getAuth(authToken) == null) {
+                throw new IllegalArgumentException("Must be authenticated to logout");
+            }
+
+            // list all the games
+            return new ArrayList<GameData>(gameDAO.listGames());
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
