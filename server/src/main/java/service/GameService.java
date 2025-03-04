@@ -66,7 +66,7 @@ public class GameService {
 
             // check if game is already full (has 2 players)
             if (game.whiteUsername() != null && game.blackUsername() != null) {
-                throw new IllegalArgumentException("Game already has two players")
+                throw new IllegalArgumentException("Game already has two players");
             }
 
             // verify a color was given
