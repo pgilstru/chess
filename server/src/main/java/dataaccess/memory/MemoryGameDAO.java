@@ -31,7 +31,7 @@ public class MemoryGameDAO implements GameDAO {
             throw new DataAccessException("Cannot create an empty game");
         }
         int gameIdCount = 1;
-        while (getGame(gameIdCount) != null) {
+        while (games.containsKey(gameIdCount)) {
             // increment the gameIdCount until there is an available one
             gameIdCount++;
         }
@@ -41,8 +41,9 @@ public class MemoryGameDAO implements GameDAO {
         String gameName = gameData.gameName();
 
         // Create a new game.
-        gameData = new GameData(gameIdCount, whiteUser, blackUser, gameName, gameData.game());
-        return games.put(gameIdCount, gameData);
+        GameData newGame = new GameData(gameIdCount, whiteUser, blackUser, gameName, gameData.game());
+        games.put(gameIdCount, newGame);
+        return newGame;
     }
 
     @Override
