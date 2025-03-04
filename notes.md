@@ -82,6 +82,38 @@ Data Model Classes:
 ! add some comments to ResponseException
 ! what?: [!TIP] You are not required to create your handlers in their own distinct classes. You may implement this functionality directly in the lambda functions for the endpoints of your server.
 
+Tested endpoints:
+Clear
+```ssh
+curl -X DELETE http://localhost:8080/db
+```
+
+Register
+```ssh
+curl -X POST http://localhost:8080/user \
+     -H "Content-Type: application/json" \
+     -d '{
+          "username": "testUser",
+          "password": "password123",
+          "email": "test@example.com"
+         }'
+```
+
+Login
+```ssh
+curl -X POST http://localhost:8080/session \
+     -H "Content-Type: application/json" \
+     -d '{
+          "username": "testUser",
+          "password": "password123"
+         }'
+```
+
+Logout
+```ssh
+curl -X DELETE http://localhost:8080/session \
+     -H "authToken":"78b21f77-9b12-47dd-82d2-65f6c5faa29e"
+```
 
 
 
