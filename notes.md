@@ -112,7 +112,7 @@ curl -X POST http://localhost:8080/session \
 Logout
 ```ssh
 curl -X DELETE http://localhost:8080/session \
-     -H "authToken":"78b21f77-9b12-47dd-82d2-65f6c5faa29e"
+     -H "authorization":"78b21f77-9b12-47dd-82d2-65f6c5faa29e"
 ```
 
 

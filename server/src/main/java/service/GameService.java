@@ -15,6 +15,8 @@ public class GameService {
     private GameDAO gameDAO;
     private AuthDAO authDAO;
 
+    private int gameIDCounter = 0;
+
     public GameService(GameDAO gameDAO, AuthDAO authDAO) {
         this.gameDAO = gameDAO;
         this.authDAO = authDAO;
@@ -33,7 +35,14 @@ public class GameService {
                 throw new IllegalArgumentException("Must provide a game name");
             }
 
-            // create a new game
+//            int gameID = gameIDCounter++;
+//            String whiteUser = gameData.whiteUsername();
+//            String blackUser = gameData.blackUsername();
+//            String gameName = gameData.gameName();
+//
+//            // create a new game
+//            gameData = new GameData(gameID, whiteUser, blackUser, gameName, gameData.game());
+//            return games.put(gameID, gameData);
             GameData newGame = new GameData(0, null, null, gameData.gameName(), new ChessGame());
             return gameDAO.createGame(newGame);
         } catch (DataAccessException e) {
@@ -53,6 +62,11 @@ public class GameService {
             GameData game = gameDAO.getGame(joinRequest.gameID());
             if (game == null) {
                 throw new IllegalArgumentException("Game not found");
+            }
+
+            // check if game is already full (has 2 players)
+            if (game.whiteUsername() != null && game.blackUsername() != null) {
+                throw new IllegalArgumentException("Game already has two players")
             }
 
             // verify a color was given
