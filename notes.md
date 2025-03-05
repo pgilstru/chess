@@ -115,26 +115,45 @@ curl -X POST http://localhost:8080/session \
 Logout
 ```ssh
 curl -X DELETE http://localhost:8080/session \
-     -H "authorization":"3bd5a829-bee5-45e5-bc1e-14dac9e6e870"
+     -H "authorization":"87f0b00e-eb74-42b1-8c6f-8a7f33aa871e"
 ```
 - working!
 
 List Games
 ```ssh
 curl -X GET http://localhost:8080/game \
-    -H "authorization":"dcf4b540-3c07-45e3-ad11-b94c7a8949ce"
+    -H "authorization":"672ae05d-d9e5-4d6e-9611-673ef1fc3b39"
 ```
-
+- working!
 
 Create Game
 ```ssh
 curl -X POST http://localhost:8080/game \
-    -H "authorization":"dcf4b540-3c07-45e3-ad11-b94c7a8949ce" \
+    -H "authorization":"87f0b00e-eb74-42b1-8c6f-8a7f33aa871e" \
     -H "Content-Type: application/json" \
     -d '{"gameName": "new game"}'
 ```
 - working!
 
+Join Game
+```ssh
+curl -X PUT http://localhost:8080/game \
+    -H "authorization":"672ae05d-d9e5-4d6e-9611-673ef1fc3b39" \
+    -H "Content-Type: application/json" \
+    -d '{"playerColor":"WHITE", "gameID": 2 }'
+```
+
+
+2nd user register
+```ssh
+curl -X POST http://localhost:8080/user \     
+     -H "Content-Type: application/json" \                     
+     -d '{                               
+          "username": "testUser2",
+          "password": "password123",
+          "email": "test2@example.com"
+         }'
+```
 
 # References: 
 

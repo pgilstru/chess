@@ -65,19 +65,22 @@ public class GameService {
             }
 
             // verify a color was given
-            if (joinRequest.userColor() == null) {
+            if (joinRequest.playerColor() == null) {
                 throw new IllegalArgumentException("Must provide a user color");
             }
 
-            ChessGame.TeamColor reqColor = joinRequest.userColor();
+            ChessGame.TeamColor reqColor = joinRequest.playerColor();
+
             // add them to the game
             String username = authDAO.getAuth(authToken).username();
+
             if (reqColor == ChessGame.TeamColor.BLACK) {
                 System.out.println("Assigning user " + username + " as Black in game " + game.gameID());
                 game = new GameData(game.gameID(), game.whiteUsername(), username, game.gameName(), game.game());
             } else if (reqColor == ChessGame.TeamColor.WHITE) {
+                // assign other user to black player
                 System.out.println("Assigning user " + username + " as White in game " + game.gameID());
-                game = new GameData(game.gameID(), username, game.blackUsername(), game.gameName(), game.game());
+                game = new GameData(game.gameID(), username, game.whiteUsername(), game.gameName(), game.game());
             } else {
                 // throw an error because color doesn't exist
                 throw new IllegalArgumentException("not an accepted color");
@@ -98,7 +101,7 @@ public class GameService {
             }
 
             // list all the games
-            return new ArrayList<GameData>(gameDAO.listGames());
+            return new ArrayList<>(gameDAO.listGames());
 
         } catch (DataAccessException e) {
             throw new RuntimeException(e);

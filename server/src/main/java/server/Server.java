@@ -20,6 +20,7 @@ import spark.*;
 import java.net.HttpURLConnection;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -179,19 +180,19 @@ public class Server {
 
             // summarize list (so response is shorter and easier to read)
             var listSum = list.stream().map(game -> {
-                return Map.of(
-                        "gameID", game.gameID(),
-                        "whiteUsername", game.whiteUsername() != null ? game.whiteUsername() : "TBD",  // Handle null values
-                        "blackUsername", game.blackUsername() != null ? game.blackUsername() : "TBD",  // Handle null values
-                        "gameName", game.gameName()
-                );
+                var gameData = new LinkedHashMap<String, Object>();
+                gameData.put("gameID", game.gameID());
+                gameData.put("whiteUsername", game.whiteUsername() != null ? game.whiteUsername() : "TBD");
+                gameData.put("blackUsername", game.blackUsername() != null ? game.blackUsername() : "TBD");
+                gameData.put("gameName", game.gameName());
+                return gameData;
             }).toList();
 
             // call the appropriate service
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(Map.of("games", listSum));
+            return serializer.toJson(Map.of("games", listSum + "\n"));
         } catch (ResponseException e) {
             // e.g. token is invalid
             if (e.StatusCode() == 401) {
@@ -245,9 +246,16 @@ public class Server {
         JoinRequest joinRequest = serializer.fromJson(req.body(), JoinRequest.class);
 
         // verify valid gameid and usercolor
-        if (joinRequest.gameID() <= 0 || joinRequest.userColor() == null) {
+        if (joinRequest.gameID() <= 0 || joinRequest.playerColor() == null) {
             res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
-            return serializer.toJson(Map.of("message", "Error: bad request"));
+            String message = null;
+            if (joinRequest.gameID() <= 0) {
+                message = "<= 0";
+            }
+            if (joinRequest.playerColor() == null) {
+                message = "null";
+            }
+            return serializer.toJson(Map.of("message", "Error: bad request" + message));
         }
 
         try {
