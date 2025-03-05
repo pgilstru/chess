@@ -95,7 +95,7 @@ public class GameService {
     }
 
     // public ListResult list(ListRequest listRequest) {}
-    public ArrayList list(String authToken) {
+    public List<GameData> list(String authToken) {
         try {
             // verify user is authenticated first
             if (authDAO.getAuth(authToken) == null) {

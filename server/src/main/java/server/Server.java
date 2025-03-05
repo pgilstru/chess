@@ -19,7 +19,9 @@ import spark.*;
 
 import java.net.HttpURLConnection;
 
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Server {
     private final ClearService clearService;
@@ -73,7 +75,8 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK);
 
             // return empty JSON obj to show success
-            return serializer.toJson(new Object());
+//            return serializer.toJson(new Object());
+            return "{}";
         } catch (ResponseException e) {
             // 500 error code
             res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
@@ -145,7 +148,8 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(new Object());
+//            return serializer.toJson(new Object());
+            return "{}";
         } catch (ResponseException e) {
             if (e.StatusCode() == 401) {
                 res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
@@ -164,11 +168,27 @@ public class Server {
         String authToken = checkAuth(req, res);
 
         try {
+            // get list of games
+            var list = gameService.list(authToken);
+//            GameData gameList = gameService.list(authToken).stream().map(game -> {
+//                return Map.of( "gameID", game.get)
+//            });
+            // summarize list (so response is shorter and easier to read)
+//            var listSum = list.stream().map(game -> {
+//                return Map.of(
+//                        "gameID", game.gameID(),
+//                        "whiteUsername", game.whiteUsername(),
+//                        "blackUsername", game.blackUsername(),
+//                        "gameName", game.gameName()
+//                );
+//            }).toList();
+
             // call the appropriate service
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
             return serializer.toJson(Map.of("games", gameService.list(authToken)));
+//            return serializer.toJson(Map.of("games", listSum));
         } catch (ResponseException e) {
             // e.g. token is invalid
             if (e.StatusCode() == 401) {
@@ -186,13 +206,14 @@ public class Server {
         String authToken = checkAuth(req, res);
         var serializer = new Gson();
 
-        // convert HTTP request into Java usable objects and data
-        GameData gameData = serializer.fromJson(req.body(), GameData.class);
-
-        if (gameData.gameName() == null || gameData.gameName().isEmpty()) {
+        if (req.body() == null || req.body().isEmpty()) {
             res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
             return serializer.toJson(Map.of("message", "Error: bad request"));
         }
+
+        // convert HTTP request into Java usable objects and data
+        GameData gameData = serializer.fromJson(req.body(), GameData.class);
+
         try {
             // call the appropriate service
             GameData newGame = gameService.create(gameData, authToken);
@@ -221,7 +242,7 @@ public class Server {
         JoinRequest joinRequest = serializer.fromJson(req.body(), JoinRequest.class);
 
         // verify valid gameid and usercolor
-        if (joinRequest.gameID() == 0 || joinRequest.userColor() == null) {
+        if (joinRequest.gameID() <= 0 || joinRequest.userColor() == null) {
             res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
             return serializer.toJson(Map.of("message", "Error: bad request"));
         }
@@ -232,14 +253,15 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(new Object());
+//            return serializer.toJson(new Object());
+            return "{}";
         } catch (ResponseException e) {
             // e.g. token is invalid
             if (e.StatusCode() == 401) {
                 res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
             } else if (e.StatusCode() == 403) {
                 res.status(HttpURLConnection.HTTP_FORBIDDEN);
-            }else {
+            } else {
                 // 500 error code
                 res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
             }
@@ -247,13 +269,12 @@ public class Server {
         }
     }
 
-    private String checkAuth(Request req, Response res) {
+    private String checkAuth(Request req, Response res) throws ResponseException{
         String authToken = req.headers("authorization");
-        var serializer = new Gson();
 
         if (authToken == null) {
-            res.status(401);
-            return serializer.toJson(Map.of("message", "Error: unauthorized"));
+            res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error
+            throw new ResponseException(401, "Error: unauthorized");
         }
 
         return authToken;

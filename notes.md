@@ -87,6 +87,7 @@ Clear
 ```ssh
 curl -X DELETE http://localhost:8080/db
 ```
+- working!
 
 Register
 ```ssh
@@ -98,6 +99,7 @@ curl -X POST http://localhost:8080/user \
           "email": "test@example.com"
          }'
 ```
+- working!
 
 Login
 ```ssh
@@ -108,23 +110,24 @@ curl -X POST http://localhost:8080/session \
           "password": "password123"
          }'
 ```
+- working!
 
 Logout
 ```ssh
 curl -X DELETE http://localhost:8080/session \
-     -H "authorization":"78b21f77-9b12-47dd-82d2-65f6c5faa29e"
+     -H "authorization":"2e1264ba-2cf3-4a5c-983a-481da8614d59"
 ```
 
 List Games
 ```ssh
 curl -X GET http://localhost:8080/game \
-    -H "authorization":"19c4758e-b8c7-49d7-a976-e302465bede9"
+     -H "authorization":"5d590948-4a38-4620-9e7f-c1a1619bb006"
 ```
 
 Create Game
 ```ssh
 curl -X POST http://localhost:8080/game \
-    -H "authorization":"19c4758e-b8c7-49d7-a976-e302465bede9" \
+     -H "authorization":"5d590948-4a38-4620-9e7f-c1a1619bb006"
     -H "Content-Type: application/json" \
     -d '{"gameName": "new game"}'
 ```
