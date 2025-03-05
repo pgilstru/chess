@@ -43,13 +43,18 @@ public class MemoryGameDAO implements GameDAO {
         // Create a new game.
         GameData newGame = new GameData(gameIdCount, whiteUser, blackUser, gameName, gameData.game());
         games.put(gameIdCount, newGame);
+
+        System.out.println("created game with ID: " + gameIdCount + ", Name: " + gameName);
         return newGame;
     }
 
     @Override
     public List<GameData> listGames() {
         // Retrieve all games.
-        return new ArrayList<>(games.values());
+//        return new ArrayList<>(games.values());
+        List<GameData> list = new ArrayList<>(games.values());
+        System.out.println("Listing games, found: " + list.size() + " games.");
+        return list;
     }
 
     @Override

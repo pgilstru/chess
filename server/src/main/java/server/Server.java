@@ -170,25 +170,28 @@ public class Server {
         try {
             // get list of games
             var list = gameService.list(authToken);
-//            GameData gameList = gameService.list(authToken).stream().map(game -> {
-//                return Map.of( "gameID", game.get)
-//            });
+
+            if (list == null || list.isEmpty()) {
+                list = new ArrayList<>();
+            }
+
+            System.out.println("list of games: " + list.size());
+
             // summarize list (so response is shorter and easier to read)
-//            var listSum = list.stream().map(game -> {
-//                return Map.of(
-//                        "gameID", game.gameID(),
-//                        "whiteUsername", game.whiteUsername(),
-//                        "blackUsername", game.blackUsername(),
-//                        "gameName", game.gameName()
-//                );
-//            }).toList();
+            var listSum = list.stream().map(game -> {
+                return Map.of(
+                        "gameID", game.gameID(),
+                        "whiteUsername", game.whiteUsername() != null ? game.whiteUsername() : "TBD",  // Handle null values
+                        "blackUsername", game.blackUsername() != null ? game.blackUsername() : "TBD",  // Handle null values
+                        "gameName", game.gameName()
+                );
+            }).toList();
 
             // call the appropriate service
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(Map.of("games", gameService.list(authToken)));
-//            return serializer.toJson(Map.of("games", listSum));
+            return serializer.toJson(Map.of("games", listSum));
         } catch (ResponseException e) {
             // e.g. token is invalid
             if (e.StatusCode() == 401) {
@@ -220,7 +223,7 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(newGame);
+            return serializer.toJson(Map.of("gameName", newGame.gameName()));
         } catch (ResponseException e) {
             // e.g. token is invalid
             if (e.StatusCode() == 401) {
@@ -253,7 +256,6 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-//            return serializer.toJson(new Object());
             return "{}";
         } catch (ResponseException e) {
             // e.g. token is invalid

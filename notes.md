@@ -115,23 +115,25 @@ curl -X POST http://localhost:8080/session \
 Logout
 ```ssh
 curl -X DELETE http://localhost:8080/session \
-     -H "authorization":"2e1264ba-2cf3-4a5c-983a-481da8614d59"
+     -H "authorization":"3bd5a829-bee5-45e5-bc1e-14dac9e6e870"
 ```
+- working!
 
 List Games
 ```ssh
 curl -X GET http://localhost:8080/game \
-     -H "authorization":"5d590948-4a38-4620-9e7f-c1a1619bb006"
+    -H "authorization":"dcf4b540-3c07-45e3-ad11-b94c7a8949ce"
 ```
+
 
 Create Game
 ```ssh
 curl -X POST http://localhost:8080/game \
-     -H "authorization":"5d590948-4a38-4620-9e7f-c1a1619bb006"
+    -H "authorization":"dcf4b540-3c07-45e3-ad11-b94c7a8949ce" \
     -H "Content-Type: application/json" \
     -d '{"gameName": "new game"}'
 ```
-
+- working!
 
 
 # References: 

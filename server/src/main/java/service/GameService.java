@@ -35,15 +35,10 @@ public class GameService {
                 throw new IllegalArgumentException("Must provide a game name");
             }
 
-//            int gameID = gameIDCounter++;
-//            String whiteUser = gameData.whiteUsername();
-//            String blackUser = gameData.blackUsername();
-//            String gameName = gameData.gameName();
-//
-//            // create a new game
-//            gameData = new GameData(gameID, whiteUser, blackUser, gameName, gameData.game());
-//            return games.put(gameID, gameData);
-            GameData newGame = new GameData(0, null, null, gameData.gameName(), new ChessGame());
+            String username = authDAO.getAuth(authToken).username();
+
+            // create a new game
+            GameData newGame = new GameData(gameIDCounter++, username, gameData.blackUsername(), gameData.gameName(), new ChessGame());
             return gameDAO.createGame(newGame);
         } catch (DataAccessException e) {
             throw new RuntimeException(e);
@@ -78,10 +73,10 @@ public class GameService {
             // add them to the game
             String username = authDAO.getAuth(authToken).username();
             if (reqColor == ChessGame.TeamColor.BLACK) {
-                // add them as the black piece player
+                System.out.println("Assigning user " + username + " as Black in game " + game.gameID());
                 game = new GameData(game.gameID(), game.whiteUsername(), username, game.gameName(), game.game());
             } else if (reqColor == ChessGame.TeamColor.WHITE) {
-                // add them as the white piece player
+                System.out.println("Assigning user " + username + " as White in game " + game.gameID());
                 game = new GameData(game.gameID(), username, game.blackUsername(), game.gameName(), game.game());
             } else {
                 // throw an error because color doesn't exist
