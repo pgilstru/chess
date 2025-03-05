@@ -25,4 +25,5 @@ public interface GameDAO {
     // Updates a chess game.
     // DataAccessException is thrown if the data can't be accessed (for any reason)
     void updateGame(GameData gameData) throws DataAccessException;
+
 }

@@ -37,7 +37,7 @@ public class MemoryGameDAO implements GameDAO {
         }
 
         String whiteUser = gameData.whiteUsername();
-        String blackUser = gameData.blackUsername();
+        String blackUser = gameData.blackUsername() != null ? gameData.blackUsername() : null;
         String gameName = gameData.gameName();
 
         // Create a new game.
@@ -69,7 +69,14 @@ public class MemoryGameDAO implements GameDAO {
             throw new DataAccessException("Cannot create an empty game");
         }
 
+        // null for blackUsername when needed
+        String whiteUser = gameData.whiteUsername();
+        String blackUser = gameData.blackUsername() != null? gameData.blackUsername() : null;
+
+        GameData updatedGame = new GameData(gameData.gameID(), whiteUser, blackUser, gameData.gameName(), gameData.game());
+
         // Updates a chess game.
-        games.put(gameData.gameID(), gameData);
+//        games.put(gameData.gameID(), gameData);
+        games.put(gameData.gameID(), updatedGame);
     }
 }

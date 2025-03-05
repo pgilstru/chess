@@ -2,6 +2,7 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
 import dataaccess.memory.MemoryAuthDAO;
@@ -28,6 +29,8 @@ public class Server {
     private final ClearService clearService;
     private final UserService userService;
     private final GameService gameService;
+    private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
 
     public Server() {
         // initialize daos
@@ -39,6 +42,8 @@ public class Server {
         this.clearService = new ClearService(userDAO, authDAO, gameDAO);
         this.userService = new UserService(userDAO, authDAO);
         this.gameService = new GameService(gameDAO, authDAO);
+        this.authDAO = authDAO;
+        this.gameDAO = gameDAO;
     }
 
     public int run(int desiredPort) {
@@ -91,6 +96,12 @@ public class Server {
         // convert HTTP request into Java usable objects and data
         UserData newUser = serializer.fromJson(req.body(), UserData.class);
 
+        // verify input is valid
+        if (newUser == null || newUser.username() == null || newUser.username().isBlank() || newUser.password() == null || newUser.email() == null) {
+            res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
+            return serializer.toJson(Map.of("message", "Error: invalid input"));
+        }
+
         try {
             // call the appropriate service
             AuthData authData = userService.register(newUser);
@@ -99,16 +110,22 @@ public class Server {
 
             // when the service responds convert the response object back to JSON and send it
             return serializer.toJson(authData);
-        } catch (ResponseException e) {
-            if (e.StatusCode() == 400) {
-                res.status(HttpURLConnection.HTTP_BAD_REQUEST);
-            } else if (e.StatusCode() == 403) {
-                res.status(HttpURLConnection.HTTP_FORBIDDEN);
-            } else {
-                // 500 error code
-                res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
-            }
-            return serializer.toJson(Map.of("message", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            res.status(HttpURLConnection.HTTP_FORBIDDEN); // 403 error code
+            return serializer.toJson(Map.of("message", "Error: username is already taken"));
+        } catch (Exception e) {
+            res.status(HttpURLConnection.HTTP_INTERNAL_ERROR); // 500 error code
+            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
+//        } catch (ResponseException e) {
+//            if (e.StatusCode() == 400) {
+//                res.status(HttpURLConnection.HTTP_BAD_REQUEST);
+//            } else if (e.StatusCode() == 403) {
+//                res.status(HttpURLConnection.HTTP_FORBIDDEN);
+//            } else {
+//                // 500 error code
+//                res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
+//            }
+//            return serializer.toJson(Map.of("message", e.getMessage()));
         }
     }
 
@@ -121,6 +138,12 @@ public class Server {
         try {
             // call the appropriate service
             AuthData authData = userService.login(user);
+
+            // verify user is authenticated
+            if (authData == null) {
+                res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
+                return serializer.toJson(Map.of("message", "Error: Username or password is incorrect"));
+            }
 
             res.status(HttpURLConnection.HTTP_OK); // 200 error code
 
@@ -137,19 +160,24 @@ public class Server {
         }
     }
 
-    private Object logoutHandler(Request req, Response res) throws ResponseException {
+    private Object logoutHandler(Request req, Response res) throws DataAccessException {
         var serializer = new Gson();
 
         // get auth header (token)
-        String authToken = checkAuth(req, res);
+//        String authToken = checkAuth(req, res);
+        String authToken = req.headers("authorization");
+        if (authToken == null || authDAO.getAuth(authToken) == null) {
+            res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error code
+            return serializer.toJson(Map.of("message", "Error: invalid authToken"));
+        }
 
         try {
             // call the appropriate service
             userService.logout(authToken);
+
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-//            return serializer.toJson(new Object());
             return "{}";
         } catch (ResponseException e) {
             if (e.StatusCode() == 401) {
@@ -158,7 +186,7 @@ public class Server {
                 // 500 error code
                 res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
             }
-            return serializer.toJson(Map.of("message", e.getMessage()));
+            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
         }
     }
 
@@ -182,8 +210,8 @@ public class Server {
             var listSum = list.stream().map(game -> {
                 var gameData = new LinkedHashMap<String, Object>();
                 gameData.put("gameID", game.gameID());
-                gameData.put("whiteUsername", game.whiteUsername() != null ? game.whiteUsername() : "TBD");
-                gameData.put("blackUsername", game.blackUsername() != null ? game.blackUsername() : "TBD");
+                gameData.put("whiteUsername", game.whiteUsername() != null ? game.whiteUsername() : null);
+                gameData.put("blackUsername", game.blackUsername() != null ? game.blackUsername() : null);
                 gameData.put("gameName", game.gameName());
                 return gameData;
             }).toList();
@@ -192,7 +220,7 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(Map.of("games", listSum + "\n"));
+            return serializer.toJson(Map.of("games", listSum));
         } catch (ResponseException e) {
             // e.g. token is invalid
             if (e.StatusCode() == 401) {
@@ -205,10 +233,17 @@ public class Server {
         }
     }
 
-    private Object createGameHandler(Request req, Response res) throws ResponseException {
+    private Object createGameHandler(Request req, Response res) throws DataAccessException {
         // get auth header (token)
-        String authToken = checkAuth(req, res);
+//        String authToken = checkAuth(req, res);
+
         var serializer = new Gson();
+
+        String authToken = req.headers("authorization");
+        if (authToken == null || authDAO.getAuth(authToken) == null) {
+            res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error code
+            return serializer.toJson(Map.of("message", "Error: invalid authToken"));
+        }
 
         if (req.body() == null || req.body().isEmpty()) {
             res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
@@ -221,10 +256,13 @@ public class Server {
         try {
             // call the appropriate service
             GameData newGame = gameService.create(gameData, authToken);
+
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(Map.of("gameName", newGame.gameName()));
+//            return serializer.toJson(Map.of("gameName", newGame.gameName()));
+            return serializer.toJson(Map.of("gameID", newGame.gameID()));
+
         } catch (ResponseException e) {
             // e.g. token is invalid
             if (e.StatusCode() == 401) {
@@ -250,10 +288,10 @@ public class Server {
             res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
             String message = null;
             if (joinRequest.gameID() <= 0) {
-                message = "<= 0";
+                message = "gameID is invalid";
             }
             if (joinRequest.playerColor() == null) {
-                message = "null";
+                message = "must enter a player color";
             }
             return serializer.toJson(Map.of("message", "Error: bad request" + message));
         }
@@ -275,14 +313,14 @@ public class Server {
                 // 500 error code
                 res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
             }
-            return serializer.toJson(Map.of("message", e.getMessage()));
+            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
         }
     }
 
     private String checkAuth(Request req, Response res) throws ResponseException{
         String authToken = req.headers("authorization");
 
-        if (authToken == null) {
+        if (authToken == null || authToken.isEmpty()) {
             res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error
             throw new ResponseException(401, "Error: unauthorized");
         }

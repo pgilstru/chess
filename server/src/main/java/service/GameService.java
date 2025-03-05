@@ -35,10 +35,8 @@ public class GameService {
                 throw new IllegalArgumentException("Must provide a game name");
             }
 
-            String username = authDAO.getAuth(authToken).username();
-
             // create a new game
-            GameData newGame = new GameData(gameIDCounter++, username, gameData.blackUsername(), gameData.gameName(), new ChessGame());
+            GameData newGame = new GameData(gameIDCounter++, gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), new ChessGame());
             return gameDAO.createGame(newGame);
         } catch (DataAccessException e) {
             throw new RuntimeException(e);
@@ -50,7 +48,7 @@ public class GameService {
         try {
             // verify user is authenticated first
             if (authDAO.getAuth(authToken) == null) {
-                throw new IllegalArgumentException("Must be authenticated to logout");
+                throw new ResponseException(401, "Must be authenticated to join a game");
             }
 
             // get the game and verify the game exists
@@ -71,6 +69,14 @@ public class GameService {
 
             ChessGame.TeamColor reqColor = joinRequest.playerColor();
 
+            // verify requested color is available
+            if (reqColor == ChessGame.TeamColor.BLACK && game.blackUsername() != null) {
+                throw new ResponseException(403, "Player for black team is already taken");
+            }
+            if (reqColor == ChessGame.TeamColor.WHITE && game.whiteUsername() != null) {
+                throw new ResponseException(403, "Player for white team is already taken");
+            }
+
             // add them to the game
             String username = authDAO.getAuth(authToken).username();
 
@@ -80,7 +86,7 @@ public class GameService {
             } else if (reqColor == ChessGame.TeamColor.WHITE) {
                 // assign other user to black player
                 System.out.println("Assigning user " + username + " as White in game " + game.gameID());
-                game = new GameData(game.gameID(), username, game.whiteUsername(), game.gameName(), game.game());
+                game = new GameData(game.gameID(), username, game.blackUsername(), game.gameName(), game.game());
             } else {
                 // throw an error because color doesn't exist
                 throw new IllegalArgumentException("not an accepted color");
@@ -97,7 +103,7 @@ public class GameService {
         try {
             // verify user is authenticated first
             if (authDAO.getAuth(authToken) == null) {
-                throw new IllegalArgumentException("Must be authenticated to logout");
+                throw new ResponseException(401, "Must be authenticated to list games");
             }
 
             // list all the games

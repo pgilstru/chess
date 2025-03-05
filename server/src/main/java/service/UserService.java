@@ -61,7 +61,8 @@ public class UserService {
             // verify user exists and compare entered password to password stored
             if (currUser == null || !userData.password().equals(currUser.password())) {
                 // say username or password to be more secure
-                throw new IllegalArgumentException("username or password is incorrect");
+//                throw new IllegalArgumentException("username or password is incorrect");
+                return null;
             }
 
             // create new authData
