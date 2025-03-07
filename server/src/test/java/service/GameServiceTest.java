@@ -96,16 +96,11 @@ public class GameServiceTest {
     @Test
     public void failedListGamesUnAuth() {
         // try to list games without being authenticated (should fail)
-        // list games
-        List<GameData> gameDataList = gameService.list(null);
 
         // see if trying to list a game unauthorized throws an exception
-        try {
-            gameService.list(null);
-            Assertions.fail("Fail: successfully list games unauthorized. Expected an Response.");
-        } catch (ResponseException e) {
-            Assertions.assertEquals("Must be authenticated to list games", e.getMessage());
-        }
+        ResponseException thrown = Assertions.assertThrows(ResponseException.class,
+                () -> gameService.list(null));
+        Assertions.assertEquals("Must be authenticated to list games", thrown.getMessage());
     }
 
     @Test
@@ -138,6 +133,6 @@ public class GameServiceTest {
         JoinRequest req = new JoinRequest(ChessGame.TeamColor.BLACK, 222);
 
         // see if trying to join a non-existent game throws an exception
-        Assertions.assertThrows(IllegalArgumentException.class, () -> gameService.join(req, "Game not found"));
+        Assertions.assertThrows(ResponseException.class, () -> gameService.join(req, "Game not found"));
     }
 }
