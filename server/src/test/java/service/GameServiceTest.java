@@ -29,7 +29,7 @@ public class GameServiceTest {
     }
 
     @BeforeEach
-    public void clear() throws ResponseException {
+    public void clear() throws ResponseException, DatabaseUnavailableException {
         // clear everything before running each test
         new ClearService(userDAO, authDAO, gameDAO).clear();
     }

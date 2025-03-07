@@ -12,10 +12,7 @@ import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
 import model.UserData;
-import service.ClearService;
-import service.GameService;
-import service.ResponseException;
-import service.UserService;
+import service.*;
 import spark.*;
 
 import java.net.HttpURLConnection;

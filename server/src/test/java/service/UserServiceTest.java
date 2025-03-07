@@ -27,7 +27,7 @@ public class UserServiceTest {
     }
 
     @BeforeEach
-    public void clear() throws ResponseException {
+    public void clear() throws ResponseException, DatabaseUnavailableException {
         // clear everything before running each test
         new ClearService(userDAO, authDAO, gameDAO).clear();
     }
@@ -53,14 +53,10 @@ public class UserServiceTest {
 
         // first, need to register with an available username (this will be the existing user)
         UserData userData = new UserData("testUser", "password", "kimkim@kimkim.kim");
-        AuthData authData = userService.register(userData);
-
-        // logout before trying to register again
-        userService.logout(authData.authToken());
+        userService.register(userData);
 
         // attempt to register with the same username again
         UserData userData2 = new UserData("testUser", "diffpassword", "jamjam@jamjam.jam");
-        userService.register(userData2);
 
         // verify it threw an exception (it should have)
         IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class,
@@ -74,19 +70,16 @@ public class UserServiceTest {
 
         // first, need to register
         UserData userData = new UserData("testUser", "password", "kimkim@kimkim.kim");
-        AuthData authData = userService.register(userData);
-
-        // logout before trying to login
-        userService.logout(authData.authToken());
+        userService.register(userData);
 
         // attempt to login with registered credentials
         AuthData loginAuthData = userService.login(userData);
 
         // verify you got authData back (aka were successful in logging in)
-        Assertions.assertNotNull(authData);
+        Assertions.assertNotNull(loginAuthData);
 
         // verify it logged in and isn't just grabbing other data or returning wrong
-        Assertions.assertEquals("testUser", authData.username());
+        Assertions.assertEquals("testUser", loginAuthData.username());
     }
 
     @Test
@@ -94,10 +87,7 @@ public class UserServiceTest {
         // tests logging in with an incorrect password (should fail)
         // first, need to register
         UserData userData = new UserData("testUser", "password", "kimkim@kimkim.kim");
-        AuthData authData = userService.register(userData);
-
-        // logout before trying to login with wrong credentials
-        userService.logout(authData.authToken());
+        userService.register(userData);
 
         // attempt to login with wrong password
         UserData incorrectUserData = new UserData("testUser", "wrongPassword", "kimkim@kimkim.kim");
@@ -112,20 +102,20 @@ public class UserServiceTest {
         // tests successfully logging out
         // first, need to register
         UserData userData = new UserData("testUser", "password", "kimkim@kimkim.kim");
-        AuthData authData = userService.register(userData);
+        userService.register(userData);
 
-        // verify user can logout when authenticated
-        userService.logout(authData.authToken());
+        // then, login
+        AuthData authData = userService.login(userData);
 
-        // verify no exception is thrown when attempting to logout
+        // verify no exception is thrown when attempting to logout with valid authToken
         Assertions.assertDoesNotThrow(() -> userService.logout(authData.authToken()));
     }
 
     @Test
     public void failedLogout_UnAuth() {
         // attempt to logout while not logged in
-        IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException,
-                () -> userService.logout("nottheauthtoken"));
+        IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class,
+                () -> userService.logout(null));
         Assertions.assertEquals("Must be authenticated to logout", thrown.getMessage());
     }
 }
