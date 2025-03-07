@@ -36,7 +36,10 @@ public class GameService {
             }
 
             // create a new game
-            GameData newGame = new GameData(gameIDCounter++, gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), new ChessGame());
+            String whiteUser = gameData.whiteUsername();
+            String blackUser = gameData.blackUsername();
+            String gameName = gameData.gameName();
+            GameData newGame = new GameData(gameIDCounter++, whiteUser, blackUser, gameName, new ChessGame());
             return gameDAO.createGame(newGame);
         } catch (DataAccessException e) {
             throw new RuntimeException(e);

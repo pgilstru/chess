@@ -20,7 +20,6 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Server {
     private final ClearService clearService;
@@ -28,6 +27,9 @@ public class Server {
     private final GameService gameService;
     private final AuthDAO authDAO;
     private final GameDAO gameDAO;
+
+    private final int unAuth;
+    private final int internalErr;
 
     public Server() {
         // initialize daos
@@ -41,6 +43,9 @@ public class Server {
         this.gameService = new GameService(gameDAO, authDAO);
         this.authDAO = authDAO;
         this.gameDAO = gameDAO;
+
+        this.unAuth = HttpURLConnection.HTTP_UNAUTHORIZED;
+        this.internalErr = HttpURLConnection.HTTP_INTERNAL_ERROR;
     }
 
     public int run(int desiredPort) {
@@ -82,8 +87,7 @@ public class Server {
             return "{}";
         } catch (ResponseException e) {
             // 500 error code
-            res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
-            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
+            return errorHandler(res, e, HttpURLConnection.HTTP_INTERNAL_ERROR);
         }
     }
 
@@ -111,18 +115,7 @@ public class Server {
             res.status(HttpURLConnection.HTTP_FORBIDDEN); // 403 error code
             return serializer.toJson(Map.of("message", "Error: username is already taken"));
         } catch (Exception e) {
-            res.status(HttpURLConnection.HTTP_INTERNAL_ERROR); // 500 error code
-            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
-//        } catch (ResponseException e) {
-//            if (e.StatusCode() == 400) {
-//                res.status(HttpURLConnection.HTTP_BAD_REQUEST);
-//            } else if (e.StatusCode() == 403) {
-//                res.status(HttpURLConnection.HTTP_FORBIDDEN);
-//            } else {
-//                // 500 error code
-//                res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
-//            }
-//            return serializer.toJson(Map.of("message", e.getMessage()));
+            return errorHandler(res, e, HttpURLConnection.HTTP_INTERNAL_ERROR);
         }
     }
 
@@ -141,19 +134,12 @@ public class Server {
                 res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
                 return serializer.toJson(Map.of("message", "Error: Username or password is incorrect"));
             }
-
             res.status(HttpURLConnection.HTTP_OK); // 200 error code
 
             // when the service responds convert the response object back to JSON and send it
             return serializer.toJson(authData);
         } catch (ResponseException e) {
-            if (e.StatusCode() == 401) {
-                res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
-            } else {
-                // 500 error code
-                res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
-            }
-            return serializer.toJson(Map.of("message", e.getMessage()));
+            return errorHandler(res, e, e.statusCode() == 401 ? unAuth : internalErr);
         }
     }
 
@@ -161,7 +147,6 @@ public class Server {
         var serializer = new Gson();
 
         // get auth header (token)
-//        String authToken = checkAuth(req, res);
         String authToken = req.headers("authorization");
         if (authToken == null || authDAO.getAuth(authToken) == null) {
             res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error code
@@ -177,13 +162,7 @@ public class Server {
             // when the service responds convert the response object back to JSON and send it
             return "{}";
         } catch (ResponseException e) {
-            if (e.StatusCode() == 401) {
-                res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
-            } else {
-                // 500 error code
-                res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
-            }
-            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
+            return errorHandler(res, e, e.statusCode() == 401 ? unAuth : internalErr);
         }
     }
 
@@ -220,22 +199,14 @@ public class Server {
             return serializer.toJson(Map.of("games", listSum));
         } catch (ResponseException e) {
             // e.g. token is invalid
-            if (e.StatusCode() == 401) {
-                res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
-            } else {
-                // 500 error code
-                res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
-            }
-            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
+            return errorHandler(res, e, e.statusCode() == 401 ? unAuth : internalErr);
         }
     }
 
     private Object createGameHandler(Request req, Response res) throws DataAccessException {
-        // get auth header (token)
-//        String authToken = checkAuth(req, res);
-
         var serializer = new Gson();
 
+        // get auth header (token)
         String authToken = req.headers("authorization");
         if (authToken == null || authDAO.getAuth(authToken) == null) {
             res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error code
@@ -257,18 +228,11 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-//            return serializer.toJson(Map.of("gameName", newGame.gameName()));
             return serializer.toJson(Map.of("gameID", newGame.gameID()));
 
         } catch (ResponseException e) {
             // e.g. token is invalid
-            if (e.StatusCode() == 401) {
-                res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
-            } else {
-                // 500 error code
-                res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
-            }
-            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
+            return errorHandler(res, e, e.statusCode() == 401 ? unAuth : internalErr);
         }
     }
 
@@ -302,15 +266,8 @@ public class Server {
             return "{}";
         } catch (ResponseException e) {
             // e.g. token is invalid
-            if (e.StatusCode() == 401) {
-                res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
-            } else if (e.StatusCode() == 403) {
-                res.status(HttpURLConnection.HTTP_FORBIDDEN);
-            } else {
-                // 500 error code
-                res.status(HttpURLConnection.HTTP_INTERNAL_ERROR);
-            }
-            return serializer.toJson(Map.of("message", "Error: " + e.getMessage()));
+            int forbidden = HttpURLConnection.HTTP_FORBIDDEN;
+            return errorHandler(res, e, e.statusCode() == 401 ? unAuth : e.statusCode() == 403 ? forbidden : internalErr);
         }
     }
 
@@ -323,5 +280,16 @@ public class Server {
         }
 
         return authToken;
+    }
+
+    // added for code quality
+    private Object errorHandler(Response res, Exception exception, int statusCode) {
+        var serializer = new Gson();
+
+        // set statusCode
+        res.status(statusCode);
+
+        // returnn error message
+        return serializer.toJson(Map.of("message", "Error: " + exception.getMessage()));
     }
 }

@@ -48,7 +48,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void failedRegister_NameTaken() {
+    public void failedRegisterNameTaken() {
         // tests registering with an unavailable username (should fail)
 
         // first, need to register with an available username (this will be the existing user)
@@ -83,7 +83,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void failedLogin_IncorrectPW() {
+    public void failedLoginIncorrectPW() {
         // tests logging in with an incorrect password (should fail)
         // first, need to register
         UserData userData = new UserData("testUser", "password", "kimkim@kimkim.kim");
@@ -112,7 +112,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void failedLogout_UnAuth() {
+    public void failedLogoutUnAuth() {
         // attempt to logout while not logged in
         IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class,
                 () -> userService.logout(null));

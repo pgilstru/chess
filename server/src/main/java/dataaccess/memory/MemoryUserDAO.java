@@ -20,7 +20,6 @@ public class MemoryUserDAO implements UserDAO {
     public UserData getUser(String username) throws DataAccessException{
         // verify username exists
         if (!users.containsKey(username)) {
-//            throw new DataAccessException("user doesn't exists");
             return null;
         }
 
@@ -30,11 +29,6 @@ public class MemoryUserDAO implements UserDAO {
 
     @Override
     public void createUser(UserData userData) throws DataAccessException{
-        // verify user doesn't already exist (does this in userservice now...?)
-//        if (users.containsKey(userData.username())) {
-//            throw new DataAccessException("user already exists");
-//        }
-
         // Create a new user.
         users.put(userData.username(), userData);
     }

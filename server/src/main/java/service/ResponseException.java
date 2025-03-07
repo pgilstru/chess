@@ -26,8 +26,7 @@ public class ResponseException extends RuntimeException {
         return new ResponseException(status, msg);
     }
 
-    public int StatusCode() {
+    public int statusCode() {
         return statusCode;
     }
 }
-// lowkey a little copied from petshop

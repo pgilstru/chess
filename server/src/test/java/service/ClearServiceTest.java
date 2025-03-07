@@ -58,7 +58,7 @@ public class ClearServiceTest {
     }
 
     @Test
-    public void failedClear_DBUnavail() {
+    public void failedClearDbUnavail() {
         // tests for the database being unavailable
         // "simulate" an error with the database by sending null data
         clearService = new ClearService(null, authDAO, gameDAO);

@@ -59,21 +59,18 @@ public class GameServiceTest {
     }
 
     @Test
-    public void failedCreate_UnAuth() throws ResponseException {
+    public void failedCreateUnAuth() throws ResponseException {
         // test trying to create a game without being authorized... should fail
         // create a game
         GameData req = new GameData(123,null, null, "test game", new ChessGame());
 
         // see if trying to create a game unauthorized throws an exception
-//        try {
-//            gameService.create(req, null);
-//            Assertions.fail("Fail: successfully created a game unauthorized. Expected an IllegalArgumentException.");
-//        } catch (IllegalArgumentException e) {
-//            Assertions.assertEquals("Must be authenticated to create a game", e.getMessage());
-//        }
-        IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class,
-                () -> gameService.create(req, null));
-        Assertions.assertEquals("Must be authenticated to create a game", thrown.getMessage());
+        try {
+            gameService.create(req, null);
+            Assertions.fail("Fail: successfully created a game unauthorized. Expected an IllegalArgumentException.");
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Must be authenticated to create a game", e.getMessage());
+        }
     }
 
     @Test
@@ -89,43 +86,26 @@ public class GameServiceTest {
         expected.add(gameService.create(new GameData(1, "cami", null, "cams cool game", new ChessGame()), authData.authToken()));
         expected.add(gameService.create(new GameData(2, "luke", null, "lukes cool game", new ChessGame()), authData.authToken()));
 
-        // list the games
+        // try to list the games
         var actual = gameService.list(authData.authToken());
 
+        // verify it worked
         Assertions.assertIterableEquals(expected, actual);
-
-        // create a game to list
-//        GameData game = new GameData(123,"testUser", null, "test game to list", new ChessGame());
-//        gameDAO.createGame(game);
-//
-//        // try to list the game(s)
-//        List<GameData> gameDataList = gameService.list(authData.authToken());
-//
-//        // verify game's successfully listed and listed properly
-//        GameData firstGame = gameDataList.getFirst();
-//        Assertions.assertNotNull(gameDataList);
-//        Assertions.assertEquals(123, firstGame.gameID());
-//        Assertions.assertEquals("test game to list", firstGame.gameName());
-//        Assertions.assertEquals("testUser", firstGame.whiteUsername());
     }
 
     @Test
-    public void failedListGames_UnAuth() {
+    public void failedListGamesUnAuth() {
         // try to list games without being authenticated (should fail)
         // list games
-//        List<GameData> gameDataList = gameService.list(null);
-//
-//        // see if trying to list a game unauthorized throws an exception
-//        try {
-//            gameService.list(null);
-//            Assertions.fail("Fail: successfully list games unauthorized. Expected an Response.");
-//        } catch (ResponseException e) {
-//            Assertions.assertEquals("Must be authenticated to list games", e.getMessage());
-//        }
+        List<GameData> gameDataList = gameService.list(null);
 
-        ResponseException thrown = Assertions.assertThrows(ResponseException.class,
-                () -> gameService.list(null));
-        Assertions.assertEquals("Must be authenticated to list games", thrown.getMessage());
+        // see if trying to list a game unauthorized throws an exception
+        try {
+            gameService.list(null);
+            Assertions.fail("Fail: successfully list games unauthorized. Expected an Response.");
+        } catch (ResponseException e) {
+            Assertions.assertEquals("Must be authenticated to list games", e.getMessage());
+        }
     }
 
     @Test
@@ -149,7 +129,7 @@ public class GameServiceTest {
     }
 
     @Test
-    public void failedJoinGame_GameNotFound() throws DataAccessException {
+    public void failedJoinGameGameNotFound() throws DataAccessException {
         // tests joining a game that doesn't exist (should fail)
         // authenticate the user (so test doesn't give us a not authenticated error instead)
         AuthData authData = new AuthData("some-auth-token", "testUser");
@@ -158,10 +138,6 @@ public class GameServiceTest {
         JoinRequest req = new JoinRequest(ChessGame.TeamColor.BLACK, 222);
 
         // see if trying to join a non-existent game throws an exception
-//        Assertions.assertThrows(IllegalArgumentException.class, () -> gameService.join(req, "Game not found"));
-
-        IllegalArgumentException thrown = Assertions.assertThrows( IllegalArgumentException.class,
-                () -> gameService.join(req, authData.authToken()));
-        Assertions.assertEquals("Game not found", thrown.getMessage());
+        Assertions.assertThrows(IllegalArgumentException.class, () -> gameService.join(req, "Game not found"));
     }
 }
