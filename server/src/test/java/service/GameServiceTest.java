@@ -1,7 +1,6 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.*;
 import dataaccess.memory.*;
 import dataaccess.DataAccessException;
 import model.AuthData;
@@ -52,7 +51,7 @@ public class GameServiceTest {
 
         // verify it's stored (in RAM or database) by checking if it's in the list by comparing things
         GameData gameData = gameDataList.getFirst(); // grab from DAO
-        Assertions.assertEquals(req.gameID(), gameData.gameID());
+        Assertions.assertEquals(res.gameID(), gameData.gameID());
         Assertions.assertEquals(req.gameName(), gameData.gameName()); // verify the name is the same
         Assertions.assertNull(gameData.whiteUsername()); // verify nobody was auto added as players without joining
         Assertions.assertNull(gameData.blackUsername());
@@ -66,12 +65,15 @@ public class GameServiceTest {
         GameData req = new GameData(123,null, null, "test game", new ChessGame());
 
         // see if trying to create a game unauthorized throws an exception
-        try {
-            gameService.create(req, null);
-            Assertions.fail("Fail: successfully created a game unauthorized. Expected an IllegalArgumentException.");
-        } catch (IllegalArgumentException e) {
-            Assertions.assertEquals("Must be authenticated to create a game", e.getMessage());
-        }
+//        try {
+//            gameService.create(req, null);
+//            Assertions.fail("Fail: successfully created a game unauthorized. Expected an IllegalArgumentException.");
+//        } catch (IllegalArgumentException e) {
+//            Assertions.assertEquals("Must be authenticated to create a game", e.getMessage());
+//        }
+        IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class,
+                () -> gameService.create(req, null));
+        Assertions.assertEquals("Must be authenticated to create a game", thrown.getMessage());
     }
 
     @Test
@@ -83,12 +85,12 @@ public class GameServiceTest {
 
         // make an empty list to store expected games
         List<GameData> expected = new ArrayList<>();
-        expected.add(gameDAO.createGame(new GameData(0, "brenner", null, "brens cool game", new ChessGame())));
-        expected.add(gameDAO.createGame(new GameData(1, "cami", null, "cams cool game", new ChessGame())));
-        expected.add(gameDAO.createGame(new GameData(2, "luke", null, "lukes cool game", new ChessGame())));
+        expected.add(gameService.create(new GameData(0, "brenner", null, "brens cool game", new ChessGame()), authData.authToken()));
+        expected.add(gameService.create(new GameData(1, "cami", null, "cams cool game", new ChessGame()), authData.authToken()));
+        expected.add(gameService.create(new GameData(2, "luke", null, "lukes cool game", new ChessGame()), authData.authToken()));
 
         // list the games
-        var actual = gameDAO.listGames();
+        var actual = gameService.list(authData.authToken());
 
         Assertions.assertIterableEquals(expected, actual);
 
@@ -111,17 +113,22 @@ public class GameServiceTest {
     public void failedListGames_UnAuth() {
         // try to list games without being authenticated (should fail)
         // list games
-        List<GameData> gameDataList = gameService.list(null);
+//        List<GameData> gameDataList = gameService.list(null);
+//
+//        // see if trying to list a game unauthorized throws an exception
+//        try {
+//            gameService.list(null);
+//            Assertions.fail("Fail: successfully list games unauthorized. Expected an Response.");
+//        } catch (ResponseException e) {
+//            Assertions.assertEquals("Must be authenticated to list games", e.getMessage());
+//        }
 
-        // see if trying to list a game unauthorized throws an exception
-        try {
-            gameService.list(null);
-            Assertions.fail("Fail: successfully list games unauthorized. Expected an Response.");
-        } catch (ResponseException e) {
-            Assertions.assertEquals("Must be authenticated to lis games", e.getMessage());
-        }
+        ResponseException thrown = Assertions.assertThrows(ResponseException.class,
+                () -> gameService.list(null));
+        Assertions.assertEquals("Must be authenticated to list games", thrown.getMessage());
     }
 
+    @Test
     public void successfulJoinGame() throws DataAccessException {
         // tests what should be a successful joining of a game
         // authenticate the user
@@ -129,8 +136,7 @@ public class GameServiceTest {
         authDAO.createAuth(authData);
 
         // create a game
-        GameData gameData = new GameData(123,null, null, "test game", new ChessGame());
-        gameData = gameDAO.createGame(gameData);
+        GameData gameData = gameService.create(new GameData(123,null, null, "test game", new ChessGame()), authData.authToken());
 
         // attempt joining the game as white
         JoinRequest req = new JoinRequest(ChessGame.TeamColor.WHITE, gameData.gameID());
@@ -142,7 +148,20 @@ public class GameServiceTest {
         Assertions.assertNull(newGame.blackUsername());
     }
 
-    public void failedJoinGame_UnAuth() throws ResponseException {
-        // tests joining a game unauthenticated
+    @Test
+    public void failedJoinGame_GameNotFound() throws DataAccessException {
+        // tests joining a game that doesn't exist (should fail)
+        // authenticate the user (so test doesn't give us a not authenticated error instead)
+        AuthData authData = new AuthData("some-auth-token", "testUser");
+        authDAO.createAuth(authData);
+
+        JoinRequest req = new JoinRequest(ChessGame.TeamColor.BLACK, 222);
+
+        // see if trying to join a non-existent game throws an exception
+//        Assertions.assertThrows(IllegalArgumentException.class, () -> gameService.join(req, "Game not found"));
+
+        IllegalArgumentException thrown = Assertions.assertThrows( IllegalArgumentException.class,
+                () -> gameService.join(req, authData.authToken()));
+        Assertions.assertEquals("Game not found", thrown.getMessage());
     }
 }

@@ -27,7 +27,7 @@ public class GameService {
         try {
             // verify user is authenticated first
             if (authDAO.getAuth(authToken) == null) {
-                throw new ResponseException(401, "Must be authenticated to create a game");
+                throw new IllegalArgumentException("Must be authenticated to create a game");
             }
 
             // verify input (gameName) isn't empty
