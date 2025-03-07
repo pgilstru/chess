@@ -4,23 +4,145 @@ import chess.ChessGame;
 import dataaccess.*;
 import dataaccess.memory.*;
 import dataaccess.DataAccessException;
+import model.AuthData;
+import model.GameData;
+import model.JoinRequest;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameServiceTest {
+    private static MemoryUserDAO userDAO;
     private static MemoryAuthDAO authDAO;
     private static MemoryGameDAO gameDAO;
     private static GameService gameService;
 
     @BeforeAll
     public static void beforeAll() {
+        userDAO = new MemoryUserDAO();
         authDAO = new MemoryAuthDAO();
         gameDAO = new MemoryGameDAO();
         gameService = new GameService(gameDAO, authDAO);
     }
 
     @BeforeEach
-    public void clear() throws DataAccessException {
-        new ClearService(authDAO, gameDAO).clear();
+    public void clear() throws ResponseException {
+        // clear everything before running each test
+        new ClearService(userDAO, authDAO, gameDAO).clear();
+    }
+
+    @Test
+    public void successfulCreate() throws ResponseException, DataAccessException {
+        // tests what should be a successful creation of a game
+        // authenticate the user
+        AuthData authData = new AuthData("some-auth-token", "testUser");
+        authDAO.createAuth(authData);
+
+        // create a game
+        GameData req = new GameData(123,null, null, "test game", new ChessGame());
+        GameData res = gameService.create(req, authData.authToken());
+
+        // verify game's successfully created
+        List<GameData> gameDataList = gameService.list(authData.authToken());
+        Assertions.assertEquals(1, gameDataList.size());
+
+        // verify it's stored (in RAM or database) by checking if it's in the list by comparing things
+        GameData gameData = gameDataList.getFirst(); // grab from DAO
+        Assertions.assertEquals(req.gameID(), gameData.gameID());
+        Assertions.assertEquals(req.gameName(), gameData.gameName()); // verify the name is the same
+        Assertions.assertNull(gameData.whiteUsername()); // verify nobody was auto added as players without joining
+        Assertions.assertNull(gameData.blackUsername());
+        Assertions.assertNotNull(gameData.game()); // verify it populated the actual game
+    }
+
+    @Test
+    public void failedCreate_UnAuth() throws ResponseException {
+        // test trying to create a game without being authorized... should fail
+        // create a game
+        GameData req = new GameData(123,null, null, "test game", new ChessGame());
+
+        // see if trying to create a game unauthorized throws an exception
+        try {
+            gameService.create(req, null);
+            Assertions.fail("Fail: successfully created a game unauthorized. Expected an IllegalArgumentException.");
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Must be authenticated to create a game", e.getMessage());
+        }
+    }
+
+    @Test
+    public void successfulListGames() throws DataAccessException {
+        // test what should be successfully listing games
+        // authenticate the user
+        AuthData authData = new AuthData("some-auth-token", "testUser");
+        authDAO.createAuth(authData);
+
+        // make an empty list to store expected games
+        List<GameData> expected = new ArrayList<>();
+        expected.add(gameDAO.createGame(new GameData(0, "brenner", null, "brens cool game", new ChessGame())));
+        expected.add(gameDAO.createGame(new GameData(1, "cami", null, "cams cool game", new ChessGame())));
+        expected.add(gameDAO.createGame(new GameData(2, "luke", null, "lukes cool game", new ChessGame())));
+
+        // list the games
+        var actual = gameDAO.listGames();
+
+        Assertions.assertIterableEquals(expected, actual);
+
+        // create a game to list
+//        GameData game = new GameData(123,"testUser", null, "test game to list", new ChessGame());
+//        gameDAO.createGame(game);
+//
+//        // try to list the game(s)
+//        List<GameData> gameDataList = gameService.list(authData.authToken());
+//
+//        // verify game's successfully listed and listed properly
+//        GameData firstGame = gameDataList.getFirst();
+//        Assertions.assertNotNull(gameDataList);
+//        Assertions.assertEquals(123, firstGame.gameID());
+//        Assertions.assertEquals("test game to list", firstGame.gameName());
+//        Assertions.assertEquals("testUser", firstGame.whiteUsername());
+    }
+
+    @Test
+    public void failedListGames_UnAuth() {
+        // try to list games without being authenticated (should fail)
+        // list games
+        List<GameData> gameDataList = gameService.list(null);
+
+        // see if trying to list a game unauthorized throws an exception
+        try {
+            gameService.list(null);
+            Assertions.fail("Fail: successfully list games unauthorized. Expected an Response.");
+        } catch (ResponseException e) {
+            Assertions.assertEquals("Must be authenticated to lis games", e.getMessage());
+        }
+    }
+
+    public void successfulJoinGame() throws DataAccessException {
+        // tests what should be a successful joining of a game
+        // authenticate the user
+        AuthData authData = new AuthData("some-auth-token", "testUser");
+        authDAO.createAuth(authData);
+
+        // create a game
+        GameData gameData = new GameData(123,null, null, "test game", new ChessGame());
+        gameData = gameDAO.createGame(gameData);
+
+        // attempt joining the game as white
+        JoinRequest req = new JoinRequest(ChessGame.TeamColor.WHITE, gameData.gameID());
+        Assertions.assertDoesNotThrow(() -> gameService.join(req, authData.authToken()));
+
+        // verify the user was added
+        GameData newGame = gameDAO.getGame(gameData.gameID());
+        Assertions.assertEquals("testUser", newGame.whiteUsername());
+        Assertions.assertNull(newGame.blackUsername());
+    }
+
+    public void failedJoinGame_UnAuth() throws ResponseException {
+        // tests joining a game unauthenticated
     }
 }
