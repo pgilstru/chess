@@ -61,12 +61,12 @@ Inside of server/src/main/java/Main.java in the main method, create a Server obj
      - ClearHandler
        - Connects with ClearService
 3. [x] Create packages for where these classes will go, if you haven't already done so.
-4. [ ] Pick one Web API endpoint and get it working end-to-end. We recommend starting with clear or register.
-   1. [ ] Create the classes you need to implement the endpoint.
-   1. [ ] Write a service test or two to make sure the service and data access parts of your code are working as you expect.
-   1. [ ] Make sure you can hit your endpoint from the test page on a browser or Curl. Verify the response is what you expect it to be.
-5. [ ] Repeat this process for all other endpoints.
-6. [ ] Write a positive and a negative JUNIT test case for each public method on your Service classes, except for Clear which only needs a positive test case.
+4. [x] Pick one Web API endpoint and get it working end-to-end. We recommend starting with clear or register.
+   1. [x] Create the classes you need to implement the endpoint.
+   1. [x] Write a service test or two to make sure the service and data access parts of your code are working as you expect.
+   1. [x] Make sure you can hit your endpoint from the test page on a browser or Curl. Verify the response is what you expect it to be.
+5. [x] Repeat this process for all other endpoints.
+6. [x] Write a positive and a negative JUNIT test case for each public method on your Service classes, except for Clear which only needs a positive test case.
 
 
 Data Model Classes:
