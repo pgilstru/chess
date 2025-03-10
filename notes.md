@@ -155,6 +155,16 @@ curl -X POST http://localhost:8080/user \
          }'
 ```
 
+
+## Phase 4 Notes
+For mysql brew, to start run `brew services start mysql`
+
+To verify its running run `brew services list`
+
+To stop it run `brew services stop mysql`
+
+To restart it run `brew services restart mysql`
+
 # References: 
 
 ## Phase 3:
