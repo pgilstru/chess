@@ -165,6 +165,15 @@ To stop it run `brew services stop mysql`
 
 To restart it run `brew services restart mysql`
 
+
+1. [x] Install the MYSQL database management system (DBMS) on your development machine.
+2. [x] Modify db.properties to contain your username and password.
+3. [ ] Design your database tables (i.e., your database schema)
+4. [ ] Implement a MySQL implementation of your Data Access Interface. Initially you can just stub out all the methods.
+5. [ ] Add the ability to create your database and tables, if they don't exist, when your server starts up.
+6. [ ] Iteratively write a test for each of your Data Access interface methods along with the backing MySQL code.
+7. [ ] Ensure that all provided pass off tests work properly, including the DatabaseTests added for this assignment, and the StandardAPITests from the previous assignment.
+
 # References: 
 
 ## Phase 3:
