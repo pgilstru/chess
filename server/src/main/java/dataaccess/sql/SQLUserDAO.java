@@ -1,4 +1,6 @@
 package dataaccess.sql;
 
-public class SQLUserDAO {
+import dataaccess.UserDAO;
+
+public class SQLUserDAO implements UserDAO {
 }
