@@ -181,3 +181,10 @@ To restart it run `brew services restart mysql`
 https://www.uuidgenerator.net/dev-corner/java
 
 https://www.w3schools.com/java/java_hashmap.asp
+
+## Phase 4:
+
+https://www.w3schools.com/sql/sql_ref_drop_table.asp
+
+https://www.w3schools.com/sql/sql_ref_keywords.asp
+
