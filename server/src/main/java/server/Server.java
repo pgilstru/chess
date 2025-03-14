@@ -1,21 +1,18 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.AuthDAO;
-import dataaccess.DataAccessException;
-import dataaccess.GameDAO;
-import dataaccess.UserDAO;
+import dataaccess.*;
 import dataaccess.memory.MemoryAuthDAO;
 import dataaccess.memory.MemoryGameDAO;
 import dataaccess.memory.MemoryUserDAO;
-import model.AuthData;
-import model.GameData;
-import model.JoinRequest;
-import model.UserData;
+import dataaccess.sql.*;
+import model.*;
 import service.*;
 import spark.*;
 
 import java.net.HttpURLConnection;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -26,26 +23,31 @@ public class Server {
     private final UserService userService;
     private final GameService gameService;
     private final AuthDAO authDAO;
+    private final UserDAO userDAO;
     private final GameDAO gameDAO;
 
     private final int unAuth;
     private final int internalErr;
 
     public Server() {
-        // initialize daos
-        UserDAO userDAO = new MemoryUserDAO();
-        AuthDAO authDAO = new MemoryAuthDAO();
-        GameDAO gameDAO = new MemoryGameDAO();
+        try {
+            AuthDAO authDAO = new SQLAuthDAO();
+            UserDAO userDAO = new SQLUserDAO();
+            GameDAO gameDAO = new SQLGameDAO();
 
-        // initialize services
-        this.clearService = new ClearService(userDAO, authDAO, gameDAO);
-        this.userService = new UserService(userDAO, authDAO);
-        this.gameService = new GameService(gameDAO, authDAO);
-        this.authDAO = authDAO;
-        this.gameDAO = gameDAO;
+            // initialize services
+            this.clearService = new ClearService(userDAO, authDAO, gameDAO);
+            this.userService = new UserService(userDAO, authDAO);
+            this.gameService = new GameService(gameDAO, authDAO);
+            this.authDAO = authDAO;
+            this.userDAO = userDAO;
+            this.gameDAO = gameDAO;
 
-        this.unAuth = HttpURLConnection.HTTP_UNAUTHORIZED;
-        this.internalErr = HttpURLConnection.HTTP_INTERNAL_ERROR;
+            this.unAuth = HttpURLConnection.HTTP_UNAUTHORIZED;
+            this.internalErr = HttpURLConnection.HTTP_INTERNAL_ERROR;
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("Error initializing daos: " + ex.getMessage());
+        }
     }
 
     public int run(int desiredPort) {
@@ -76,8 +78,6 @@ public class Server {
 
     // clear all data from db (or ram memory)
     private Object clearHandler(Request req, Response res) throws ResponseException {
-        var serializer = new Gson();
-
         try {
             clearService.clear();
             res.status(HttpURLConnection.HTTP_OK);

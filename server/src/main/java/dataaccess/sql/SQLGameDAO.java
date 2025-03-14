@@ -13,6 +13,7 @@ import chess.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,22 +59,28 @@ public class SQLGameDAO implements GameDAO {
     public GameData createGame(GameData gameData) throws DataAccessException {
         // Create a new user in the DB
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "INSERT INTO games (gameID, whiteUsername, blackUsername, gameName, game) VALUES (?, ?, ?, ?, ?)";
-            try (var prepStatement = conn.prepareStatement(statement)) {
+            var statement = "INSERT INTO games (whiteUsername, blackUsername, gameName, game) VALUES (?, ?, ?, ?)";
+            try (var prepStatement = conn.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)) {
+                String whiteUser = gameData.whiteUsername();
+                String blackUser = gameData.blackUsername() != null ? gameData.blackUsername() : null;
+                System.out.println(blackUser);
+
                 // bind gameID
-                prepStatement.setInt(1, gameData.gameID());
+//                prepStatement.setInt(1, gameData.gameID());
 
                 // bind whiteUsername
-                prepStatement.setString(2, gameData.whiteUsername());
+                prepStatement.setString(1, whiteUser);
+                System.out.println(gameData.whiteUsername());
+                System.out.println(whiteUser);
 
                 // bind blackUsername
-                prepStatement.setString(3, gameData.blackUsername());
+                prepStatement.setString(2, blackUser);
 
                 // bind gameName
-                prepStatement.setString(4, gameData.gameName());
+                prepStatement.setString(3, gameData.gameName());
 
                 // bind game (first store it as json)
-                prepStatement.setString(5, serializer.toJson(gameData.game()));
+                prepStatement.setString(4, serializer.toJson(gameData.game()));
 
                 prepStatement.executeUpdate();
 
@@ -85,7 +92,7 @@ public class SQLGameDAO implements GameDAO {
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Error: unable to create user " + ex.getMessage());
+            throw new DataAccessException("Error: unable to create game " + ex.getMessage());
         }
         throw new DataAccessException("error: game creation failed");
     }
@@ -160,15 +167,12 @@ public class SQLGameDAO implements GameDAO {
             // handle creating gameData table if it doesn't already exist
             """
             CREATE TABLE IF NOT EXISTS games (
-            `gameID` int NOT NULL,
-            `whiteUsername` varchar(255) NOT NULL,
-            `blackUsername` varchar(255) NOT NULL,
+            `gameID` int NOT NULL AUTO_INCREMENT,
+            `whiteUsername` varchar(255),
+            `blackUsername` varchar(255),
             `gameName` varchar(255) NOT NULL,
             `game` TEXT NOT NULL,
-            PRIMARY KEY (gameID),
-            INDEX(whiteUsername),
-            INDEX(blackUsername),
-            INDEX(gameName)
+            PRIMARY KEY (gameID)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
             """
     };
@@ -196,18 +200,64 @@ public class SQLGameDAO implements GameDAO {
                     ChessPiece chessPiece = null;
                     if (el.isJsonObject()) {
                         String pieceType = el.getAsJsonObject().get("type").getAsString();
-                        switch (ChessPiece.PieceType.valueOf(pieceType)) {
-                            case PAWN -> chessPiece = ctx.deserialize(el, PawnMovesCalculator.class);
-                            case ROOK -> chessPiece = ctx.deserialize(el, RookMovesCalculator.class);
-                            case KNIGHT -> chessPiece = ctx.deserialize(el, KnightMovesCalculator.class);
-                            case BISHOP -> chessPiece = ctx.deserialize(el, BishopMovesCalculator.class);
-                            case QUEEN -> chessPiece = ctx.deserialize(el, QueenMovesCalculator.class);
-                            case KING -> chessPiece = ctx.deserialize(el, KingMovesCalculator.class);
+                        ChessGame.TeamColor pieceColor = ChessGame.TeamColor.valueOf(el.getAsJsonObject().get("pieceColor").getAsString());
+
+                        switch (pieceType) {
+                            case "PAWN":
+                                chessPiece = new ChessPiece(pieceColor, ChessPiece.PieceType.PAWN);
+                                break;
+                            case "ROOK":
+                                chessPiece = new ChessPiece(pieceColor, ChessPiece.PieceType.ROOK);
+                                break;
+                            case "KNIGHT":
+                                chessPiece = new ChessPiece(pieceColor, ChessPiece.PieceType.KNIGHT);
+                                break;
+                            case "BISHOP":
+                                chessPiece = new ChessPiece(pieceColor, ChessPiece.PieceType.BISHOP);
+                                break;
+                            case "KING":
+                                chessPiece = new ChessPiece(pieceColor, ChessPiece.PieceType.KING);
+                                break;
+                            case "QUEEN":
+                                chessPiece = new ChessPiece(pieceColor, ChessPiece.PieceType.QUEEN);
+                                break;
+                            default:
                         }
+//                        switch (ChessPiece.PieceType.valueOf(pieceType)) {
+//                            case PAWN -> chessPiece = ctx.deserialize(el, PawnMovesCalculator.class);
+//                            case ROOK -> chessPiece = ctx.deserialize(el, RookMovesCalculator.class);
+//                            case KNIGHT -> chessPiece = ctx.deserialize(el, KnightMovesCalculator.class);
+//                            case BISHOP -> chessPiece = ctx.deserialize(el, BishopMovesCalculator.class);
+//                            case QUEEN -> chessPiece = ctx.deserialize(el, QueenMovesCalculator.class);
+//                            case KING -> chessPiece = ctx.deserialize(el, KingMovesCalculator.class);
+//                        }
                     }
                     return chessPiece;
                 });
 
+        gsonBuilder.registerTypeAdapter(PieceMovesCalculator.class,
+                (JsonDeserializer<PieceMovesCalculator>) (el, type, ctx) -> {
+                    if (el.isJsonObject()) {
+                        String pieceType = el.getAsJsonObject().get("type").getAsString();
+
+                        switch (pieceType) {
+                            case "PAWN":
+                                return ctx.deserialize(el, PawnMovesCalculator.class);
+                            case "ROOK":
+                                return ctx.deserialize(el, RookMovesCalculator.class);
+                            case "KNIGHT":
+                                return ctx.deserialize(el, KnightMovesCalculator.class);
+                            case "BISHOP":
+                                return ctx.deserialize(el, BishopMovesCalculator.class);
+                            case "KING":
+                                return ctx.deserialize(el, KingMovesCalculator.class);
+                            case "QUEEN":
+                                return ctx.deserialize(el, QueenMovesCalculator.class);
+                            default:
+                        }
+                    }
+                    return null;
+                });
         return gsonBuilder.create();
     }
 }

@@ -24,6 +24,8 @@ public class GameService {
 
     // public CreateResult create(CreateRequest createRequest) {}
     public GameData create(GameData gameData, String authToken) {
+        System.out.println("Inserting game with whiteUsername: " + gameData.whiteUsername());
+
         try {
             // verify user is authenticated first
             if (authDAO.getAuth(authToken) == null) {
