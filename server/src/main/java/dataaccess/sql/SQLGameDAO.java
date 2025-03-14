@@ -82,12 +82,13 @@ public class SQLGameDAO implements GameDAO {
                 // bind game (first store it as json)
                 prepStatement.setString(4, serializer.toJson(gameData.game()));
 
-                prepStatement.executeUpdate();
-
-                try (var rs = prepStatement.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        int gameID = rs.getInt(1);
-                        return new GameData(gameID, gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), gameData.game());
+                int affectedRows = prepStatement.executeUpdate();
+                if (affectedRows > 0) {
+                    try (var rs = prepStatement.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            int gameID = rs.getInt(1);
+                            return new GameData(gameID, gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), gameData.game());
+                        }
                     }
                 }
             }
