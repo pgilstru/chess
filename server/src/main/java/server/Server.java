@@ -2,17 +2,12 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.*;
-import dataaccess.memory.MemoryAuthDAO;
-import dataaccess.memory.MemoryGameDAO;
-import dataaccess.memory.MemoryUserDAO;
 import dataaccess.sql.*;
 import model.*;
 import service.*;
 import spark.*;
 
 import java.net.HttpURLConnection;
-import java.sql.Connection;
-import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -28,6 +23,8 @@ public class Server {
 
     private final int unAuth;
     private final int internalErr;
+
+    private static final Gson serializer = new Gson();
 
     public Server() {
         try {
@@ -83,7 +80,6 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK);
 
             // return empty JSON obj to show success
-//            return serializer.toJson(new Object());
             return "{}";
         } catch (ResponseException e) {
             // 500 error code
@@ -92,8 +88,6 @@ public class Server {
     }
 
     private Object registerHandler(Request req, Response res) throws ResponseException {
-        var serializer = new Gson();
-
         // convert HTTP request into Java usable objects and data
         UserData newUser = serializer.fromJson(req.body(), UserData.class);
 
@@ -120,8 +114,6 @@ public class Server {
     }
 
     private Object loginHandler(Request req, Response res) throws ResponseException {
-        var serializer = new Gson();
-
         // convert HTTP request into Java usable objects and data
         UserData user = serializer.fromJson(req.body(), UserData.class);
 
@@ -144,8 +136,6 @@ public class Server {
     }
 
     private Object logoutHandler(Request req, Response res) throws DataAccessException {
-        var serializer = new Gson();
-
         // get auth header (token)
         String authToken = req.headers("authorization");
         if (authToken == null || authDAO.getAuth(authToken) == null) {
@@ -167,8 +157,6 @@ public class Server {
     }
 
     private Object listGamesHandler(Request req, Response res) throws ResponseException {
-        var serializer = new Gson();
-
         // get auth header (token)
         String authToken = checkAuth(req, res);
 
@@ -183,14 +171,8 @@ public class Server {
             System.out.println("list of games: " + list.size());
 
             // summarize list (so response is shorter and easier to read)
-            var listSum = list.stream().map(game -> {
-                var gameData = new LinkedHashMap<String, Object>();
-                gameData.put("gameID", game.gameID());
-                gameData.put("whiteUsername", game.whiteUsername() != null ? game.whiteUsername() : null);
-                gameData.put("blackUsername", game.blackUsername() != null ? game.blackUsername() : null);
-                gameData.put("gameName", game.gameName());
-                return gameData;
-            }).toList();
+            var listSum = list.stream().map(game ->
+                new GameDetails(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName())).toList();
 
             // call the appropriate service
             res.status(HttpURLConnection.HTTP_OK); // 200 code
@@ -204,11 +186,9 @@ public class Server {
     }
 
     private Object createGameHandler(Request req, Response res) throws DataAccessException {
-        var serializer = new Gson();
-
         // get auth header (token)
-        String authToken = req.headers("authorization");
-        if (authToken == null || authDAO.getAuth(authToken) == null) {
+        String authToken = checkAuth(req, res);
+        if (authDAO.getAuth(authToken) == null) {
             res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error code
             return serializer.toJson(Map.of("message", "Error: invalid authToken"));
         }
@@ -239,7 +219,6 @@ public class Server {
     private Object joinGameHandler(Request req, Response res) throws ResponseException {
         // get auth header (token)
         String authToken = checkAuth(req, res);
-        var serializer = new Gson();
 
         // convert HTTP request into Java usable objects and data
         JoinRequest joinRequest = serializer.fromJson(req.body(), JoinRequest.class);
@@ -276,7 +255,7 @@ public class Server {
 
         if (authToken == null || authToken.isEmpty()) {
             res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error
-            throw new ResponseException(401, "Error: unauthorized");
+            throw new ResponseException(HttpURLConnection.HTTP_UNAUTHORIZED, "Error: unauthorized");
         }
 
         return authToken;
@@ -284,8 +263,6 @@ public class Server {
 
     // added for code quality
     private Object errorHandler(Response res, Exception exception, int statusCode) {
-        var serializer = new Gson();
-
         // set statusCode
         res.status(statusCode);
 

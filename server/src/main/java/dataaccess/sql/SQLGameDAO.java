@@ -224,14 +224,6 @@ public class SQLGameDAO implements GameDAO {
                                 break;
                             default:
                         }
-//                        switch (ChessPiece.PieceType.valueOf(pieceType)) {
-//                            case PAWN -> chessPiece = ctx.deserialize(el, PawnMovesCalculator.class);
-//                            case ROOK -> chessPiece = ctx.deserialize(el, RookMovesCalculator.class);
-//                            case KNIGHT -> chessPiece = ctx.deserialize(el, KnightMovesCalculator.class);
-//                            case BISHOP -> chessPiece = ctx.deserialize(el, BishopMovesCalculator.class);
-//                            case QUEEN -> chessPiece = ctx.deserialize(el, QueenMovesCalculator.class);
-//                            case KING -> chessPiece = ctx.deserialize(el, KingMovesCalculator.class);
-//                        }
                     }
                     return chessPiece;
                 });

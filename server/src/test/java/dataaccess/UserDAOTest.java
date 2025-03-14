@@ -1,44 +1,45 @@
 package dataaccess;
 
-import dataaccess.memory.MemoryUserDAO;
 import dataaccess.sql.SQLUserDAO;
 import model.UserData;
-import org.eclipse.jetty.server.Authentication;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.*;
 
 public class UserDAOTest {
 
-    private SQLUserDAO getUserDAO(Class<? extends SQLUserDAO> DAOclass) throws DataAccessException {
-        SQLUserDAO userDAO;
-//        if (DAOclass.equals(SQLUserDAO.class)) {
-            userDAO = new SQLUserDAO();
-//        } else {
-//            userDAO = new MemoryUserDAO();
-//        }
-        userDAO.clear();
-        return userDAO;
+    private static SQLUserDAO userDAO;
+
+    @BeforeAll
+    public static void beforeAll() throws DataAccessException {
+        userDAO = new SQLUserDAO();
     }
 
-    @ParameterizedTest
-    @ValueSource(classes = {SQLUserDAO.class})
-    void successfulCreateUser(Class<? extends SQLUserDAO> DAOclass) throws DataAccessException {
-        SQLUserDAO userDAO = getUserDAO(DAOclass);
+    @BeforeEach
+    public void clear() throws DataAccessException {
+        userDAO.clear();
+    }
 
+    @Test
+    @DisplayName("Should successfully create a new user")
+    void successfulCreateUser() throws DataAccessException {
         // create some user data
         UserData userData = new UserData("testUser", "password", "kimkim@kimkim.kim");
 
-        // verify no exception gets thrown and the user is created successfully
+        // verify no exception gets thrown and user is created successfully
         Assertions.assertDoesNotThrow(() -> userDAO.createUser(userData));
+
+        // verify userData is correct
+        UserData retrievedUser = userDAO.getUser("testUser");
+
+        Assertions.assertAll(
+                () -> Assertions.assertNotNull(retrievedUser),
+                () -> Assertions.assertEquals("testUser", retrievedUser.username()),
+                () -> Assertions.assertEquals("kimkim@kimkim.kim", retrievedUser.email())
+        );
     }
 
-    @ParameterizedTest
-    @ValueSource(classes = {SQLUserDAO.class})
-    void failedCreateUserNameTaken(Class<? extends SQLUserDAO> DAOclass) throws DataAccessException {
-        SQLUserDAO userDAO = getUserDAO(DAOclass);
-
+    @Test
+    @DisplayName("Should fail to create a new user if username already exists")
+    void failedCreateUserNameTaken() throws DataAccessException {
         // create some user data
         UserData userData1 = new UserData("testUser", "password", "kimkim@kimkim.kim");
         Assertions.assertDoesNotThrow(() -> userDAO.createUser(userData1));
