@@ -71,4 +71,19 @@ public class DatabaseManager {
             throw new DataAccessException(e.getMessage());
         }
     }
+
+    static void configureDatabase(String[] createStatements) throws DataAccessException {
+        // ensure DB exists by attempting to create it
+        DatabaseManager.createDatabase();
+        try (var conn = DatabaseManager.getConnection()) {
+            // execute createStatements CREATE TABLE statement
+            for (var statement : createStatements) {
+                try (var preparedStatement = conn.prepareStatement(statement)) {
+                    preparedStatement.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error: creating tables " + ex.getMessage());
+        }
+    }
 }

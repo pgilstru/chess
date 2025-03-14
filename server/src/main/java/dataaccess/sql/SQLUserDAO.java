@@ -2,7 +2,6 @@ package dataaccess.sql;
 
 import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
-import model.AuthData;
 import model.UserData;
 
 import java.sql.ResultSet;
@@ -11,7 +10,21 @@ import java.sql.SQLException;
 public class SQLUserDAO implements UserDAO {
     // constructor to initialize dao and configure DB
     public SQLUserDAO() throws DataAccessException {
-        configureDatabase();
+        // array of sql statements responsible for setting up the DB and its tables
+        String[] createStatements = {
+                // handle creating userData table if it doesn't already exist
+                """
+            CREATE TABLE IF NOT EXISTS users (
+            `username` varchar(255) NOT NULL,
+            `password` varchar(255) NOT NULL,
+            `email` varchar(255) NOT NULL,
+            PRIMARY KEY (username),
+            INDEX(password),
+            INDEX(email)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+            """
+        };
+        DatabaseManager.configureDatabase(createStatements);
     }
 
     @Override
@@ -87,36 +100,6 @@ public class SQLUserDAO implements UserDAO {
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Error: updating database " + ex.getMessage());
-        }
-    }
-
-    // array of sql statements responsible for setting up the DB and its tables
-    private final String[] createStatements = {
-            // handle creating userData table if it doesn't already exist
-            """
-            CREATE TABLE IF NOT EXISTS users (
-            `username` varchar(255) NOT NULL,
-            `password` varchar(255) NOT NULL,
-            `email` varchar(255) NOT NULL,
-            PRIMARY KEY (username),
-            INDEX(password),
-            INDEX(email)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-            """
-    };
-
-    private void configureDatabase() throws DataAccessException {
-        // ensure DB exists by attempting to create it
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection()) {
-            // execute createStatements CREATE TABLE statement
-            for (var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException("Error: creating tables " + ex.getMessage());
         }
     }
 }

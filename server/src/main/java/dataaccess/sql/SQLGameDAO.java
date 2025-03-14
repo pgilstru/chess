@@ -8,7 +8,6 @@ import com.google.gson.JsonDeserializer;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import model.GameData;
-import model.UserData;
 import chess.*;
 
 import java.sql.ResultSet;
@@ -22,7 +21,21 @@ public class SQLGameDAO implements GameDAO {
     // constructor to initialize dao and configure DB
     public SQLGameDAO() throws DataAccessException {
         this.serializer = createSerializer();
-        configureDatabase();
+        // array of sql statements responsible for setting up the DB and its tables
+        String[] createStatements = {
+            // handle creating gameData table if it doesn't already exist
+            """
+            CREATE TABLE IF NOT EXISTS games (
+            `gameID` int NOT NULL AUTO_INCREMENT,
+            `whiteUsername` varchar(255),
+            `blackUsername` varchar(255),
+            `gameName` varchar(255) NOT NULL,
+            `game` TEXT NOT NULL,
+            PRIMARY KEY (gameID)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+            """
+        };
+        DatabaseManager.configureDatabase(createStatements);
     }
 
     @Override
@@ -65,9 +78,6 @@ public class SQLGameDAO implements GameDAO {
                 String blackUser = gameData.blackUsername() != null ? gameData.blackUsername() : null;
                 System.out.println(blackUser);
 
-                // bind gameID
-//                prepStatement.setInt(1, gameData.gameID());
-
                 // bind whiteUsername
                 prepStatement.setString(1, whiteUser);
                 System.out.println(gameData.whiteUsername());
@@ -84,11 +94,10 @@ public class SQLGameDAO implements GameDAO {
 
                 int affectedRows = prepStatement.executeUpdate();
                 if (affectedRows > 0) {
-                    try (var rs = prepStatement.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            int gameID = rs.getInt(1);
-                            return new GameData(gameID, gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), gameData.game());
-                        }
+                    var rs = prepStatement.getGeneratedKeys();
+                    if (rs.next()) {
+                        int gameID = rs.getInt(1);
+                        return new GameData(gameID, whiteUser, blackUser, gameData.gameName(), gameData.game());
                     }
                 }
             }
@@ -101,7 +110,7 @@ public class SQLGameDAO implements GameDAO {
     @Override
     public List<GameData> listGames() throws DataAccessException{
         // Retrieve all games.
-        List<GameData> list = new ArrayList<GameData>();
+        List<GameData> list = new ArrayList<>();
         try (var conn = DatabaseManager.getConnection()) {
             var statement = "SELECT gameID, whiteUsername, blackUsername, gameName, game FROM games";
             try (var prepStatement = conn.prepareStatement(statement)) {
@@ -160,36 +169,6 @@ public class SQLGameDAO implements GameDAO {
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Error: updating database " + ex.getMessage());
-        }
-    }
-
-    // array of sql statements responsible for setting up the DB and its tables
-    private final String[] createStatements = {
-            // handle creating gameData table if it doesn't already exist
-            """
-            CREATE TABLE IF NOT EXISTS games (
-            `gameID` int NOT NULL AUTO_INCREMENT,
-            `whiteUsername` varchar(255),
-            `blackUsername` varchar(255),
-            `gameName` varchar(255) NOT NULL,
-            `game` TEXT NOT NULL,
-            PRIMARY KEY (gameID)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-            """
-    };
-
-    private void configureDatabase() throws DataAccessException {
-        // ensure DB exists by attempting to create it
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection()) {
-            // execute createStatements CREATE TABLE statement
-            for (var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException("Error: creating tables " + ex.getMessage());
         }
     }
 

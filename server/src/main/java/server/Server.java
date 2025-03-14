@@ -24,7 +24,7 @@ public class Server {
     private final int unAuth;
     private final int internalErr;
 
-    private static final Gson serializer = new Gson();
+    private static final Gson SERIALIZER = new Gson();
 
     public Server() {
         try {
@@ -89,12 +89,12 @@ public class Server {
 
     private Object registerHandler(Request req, Response res) throws ResponseException {
         // convert HTTP request into Java usable objects and data
-        UserData newUser = serializer.fromJson(req.body(), UserData.class);
+        UserData newUser = SERIALIZER.fromJson(req.body(), UserData.class);
 
         // verify input is valid
         if (newUser == null || newUser.username() == null || newUser.username().isBlank() || newUser.password() == null || newUser.email() == null) {
             res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
-            return serializer.toJson(Map.of("message", "Error: invalid input"));
+            return SERIALIZER.toJson(Map.of("message", "Error: invalid input"));
         }
 
         try {
@@ -104,10 +104,10 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(authData);
+            return SERIALIZER.toJson(authData);
         } catch (IllegalArgumentException e) {
             res.status(HttpURLConnection.HTTP_FORBIDDEN); // 403 error code
-            return serializer.toJson(Map.of("message", "Error: username is already taken"));
+            return SERIALIZER.toJson(Map.of("message", "Error: username is already taken"));
         } catch (Exception e) {
             return errorHandler(res, e, HttpURLConnection.HTTP_INTERNAL_ERROR);
         }
@@ -115,7 +115,7 @@ public class Server {
 
     private Object loginHandler(Request req, Response res) throws ResponseException {
         // convert HTTP request into Java usable objects and data
-        UserData user = serializer.fromJson(req.body(), UserData.class);
+        UserData user = SERIALIZER.fromJson(req.body(), UserData.class);
 
         try {
             // call the appropriate service
@@ -124,12 +124,12 @@ public class Server {
             // verify user is authenticated
             if (authData == null) {
                 res.status(HttpURLConnection.HTTP_UNAUTHORIZED);
-                return serializer.toJson(Map.of("message", "Error: Username or password is incorrect"));
+                return SERIALIZER.toJson(Map.of("message", "Error: Username or password is incorrect"));
             }
             res.status(HttpURLConnection.HTTP_OK); // 200 error code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(authData);
+            return SERIALIZER.toJson(authData);
         } catch (ResponseException e) {
             return errorHandler(res, e, e.statusCode() == 401 ? unAuth : internalErr);
         }
@@ -140,7 +140,7 @@ public class Server {
         String authToken = req.headers("authorization");
         if (authToken == null || authDAO.getAuth(authToken) == null) {
             res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error code
-            return serializer.toJson(Map.of("message", "Error: invalid authToken"));
+            return SERIALIZER.toJson(Map.of("message", "Error: invalid authToken"));
         }
 
         try {
@@ -178,7 +178,7 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(Map.of("games", listSum));
+            return SERIALIZER.toJson(Map.of("games", listSum));
         } catch (ResponseException e) {
             // e.g. token is invalid
             return errorHandler(res, e, e.statusCode() == 401 ? unAuth : internalErr);
@@ -190,16 +190,16 @@ public class Server {
         String authToken = checkAuth(req, res);
         if (authDAO.getAuth(authToken) == null) {
             res.status(HttpURLConnection.HTTP_UNAUTHORIZED); // 401 error code
-            return serializer.toJson(Map.of("message", "Error: invalid authToken"));
+            return SERIALIZER.toJson(Map.of("message", "Error: invalid authToken"));
         }
 
         if (req.body() == null || req.body().isEmpty()) {
             res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
-            return serializer.toJson(Map.of("message", "Error: bad request"));
+            return SERIALIZER.toJson(Map.of("message", "Error: bad request"));
         }
 
         // convert HTTP request into Java usable objects and data
-        GameData gameData = serializer.fromJson(req.body(), GameData.class);
+        GameData gameData = SERIALIZER.fromJson(req.body(), GameData.class);
 
         try {
             // call the appropriate service
@@ -208,7 +208,7 @@ public class Server {
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it
-            return serializer.toJson(Map.of("gameID", newGame.gameID()));
+            return SERIALIZER.toJson(Map.of("gameID", newGame.gameID()));
 
         } catch (ResponseException e) {
             // e.g. token is invalid
@@ -221,7 +221,7 @@ public class Server {
         String authToken = checkAuth(req, res);
 
         // convert HTTP request into Java usable objects and data
-        JoinRequest joinRequest = serializer.fromJson(req.body(), JoinRequest.class);
+        JoinRequest joinRequest = SERIALIZER.fromJson(req.body(), JoinRequest.class);
 
         // verify valid gameid and usercolor
         if (joinRequest.gameID() <= 0 || joinRequest.playerColor() == null) {
@@ -233,7 +233,7 @@ public class Server {
             if (joinRequest.playerColor() == null) {
                 message = "must enter a player color";
             }
-            return serializer.toJson(Map.of("message", "Error: bad request" + message));
+            return SERIALIZER.toJson(Map.of("message", "Error: bad request" + message));
         }
 
         try {
@@ -267,6 +267,6 @@ public class Server {
         res.status(statusCode);
 
         // returnn error message
-        return serializer.toJson(Map.of("message", "Error: " + exception.getMessage()));
+        return SERIALIZER.toJson(Map.of("message", "Error: " + exception.getMessage()));
     }
 }
