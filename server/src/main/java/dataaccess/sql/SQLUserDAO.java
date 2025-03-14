@@ -105,7 +105,6 @@ public class SQLUserDAO implements UserDAO {
             """
     };
 
-
     private void configureDatabase() throws DataAccessException {
         // ensure DB exists by attempting to create it
         DatabaseManager.createDatabase();

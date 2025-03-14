@@ -5,6 +5,8 @@ import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import model.UserData;
 import model.AuthData;
+import org.mindrot.jbcrypt.BCrypt;
+import server.Server;
 
 public class UserService {
     private final UserDAO userDAO;
@@ -31,8 +33,12 @@ public class UserService {
 
             // username is available, create new userData
             String password = userData.password();
+            String hashedPW = BCrypt.hashpw(password, BCrypt.gensalt());
+
+            System.out.println("hashed password: " + hashedPW);
+
             String email = userData.email();
-            UserData user = new UserData(username, password, email);
+            UserData user = new UserData(username, hashedPW, email);
 
             // actually create the user
             userDAO.createUser(user);
@@ -57,11 +63,10 @@ public class UserService {
 
             String username = userData.username();
             UserData currUser = userDAO.getUser(username);
+            String enteredPW = userData.password();
 
             // verify user exists and compare entered password to password stored
-            if (currUser == null || !userData.password().equals(currUser.password())) {
-                // say username or password to be more secure
-//                throw new IllegalArgumentException("username or password is incorrect");
+            if (currUser == null || !BCrypt.checkpw(enteredPW, currUser.password())) {
                 return null;
             }
 
