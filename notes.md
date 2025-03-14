@@ -174,6 +174,8 @@ To restart it run `brew services restart mysql`
 6. [x] Iteratively write a test for each of your Data Access interface methods along with the backing MySQL code.
 7. [x] Ensure that all provided pass off tests work properly, including the DatabaseTests added for this assignment, and the StandardAPITests from the previous assignment.
 
+* Go back and add more test cases for sql stuff?
+
 # References: 
 
 ## Phase 3:
