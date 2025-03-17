@@ -176,6 +176,16 @@ To restart it run `brew services restart mysql`
 
 * Go back and add more test cases for sql stuff?
 
+
+
+
+## Phase 5 Notes
+- `client/src/main/java/ui` is where client app code goes
+- `EscapeSequcnes.java` defines values you use to control the color of the console's output
+- `client/src/test/java/client` is where client unit tests go.
+
+
+
 # References: 
 
 ## Phase 3:
