@@ -1,15 +1,15 @@
 package ui;
 
 import com.sun.nio.sctp.NotificationHandler;
-import server.Server;
+import server.ServerFacade;
 
 public class ChessClient {
 
-    private final Server server;
+    private final ServerFacade server;
     private final String serverUrl;
 
     public ChessClient(String serverUrl, NotificationHandler notificationHandler) {
-        server = new Server(serverUrl);
+        server = new ServerFacade(serverUrl);
         this.serverUrl = serverUrl;
         this.notificationHandler = notificationHandler;
     }
