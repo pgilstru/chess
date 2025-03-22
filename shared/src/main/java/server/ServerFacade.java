@@ -1,8 +1,10 @@
 package server;
 
 import com.google.gson.Gson;
+import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
+import model.UserData;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,30 +25,36 @@ public class ServerFacade {
 
     // createGame
     public GameData createGame(GameData gameData) {
-        var path = "/create";
+        var path = "/game";
         return this.makeRequest("POST", path, gameData, GameData.class);
     }
 
     // joinGame
     public void joinGame(JoinRequest joinRequest) {
-        var path = "/join";
+        var path = "/game";
         this.makeRequest("PUT", path, joinRequest, null);
     }
 
     // listGames
     public List<GameData> listGames() {
-        var path = "/games";
+        var path = "/game";
         record listPetResponse(List<GameData> gameDataList) {
         }
-        return this.makeRequest("GET", path, null, listPetResponse.class);
+        return this.makeRequest("GET", path, null, listGames.class);
     }
 
     // login
+    public AuthData login(UserData userData) {
+        var path = "/session";
+        AuthData authData = makeRequest("POST", path, userData, AuthData.class);
+
+    }
+
     // logout
     // register
 
     // makeRequest
-    private <T> makeRequest(String method, String path, Object req, Class<T> responseClass) throws ResponseException {
+    private <T> T makeRequest(String method, String path, Object req, Class<T> responseClass) throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
