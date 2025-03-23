@@ -5,6 +5,7 @@ import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
 import model.UserData;
+import model.ResponseException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,33 +39,32 @@ public class ServerFacade {
     // listGames
     public List<GameData> listGames() {
         var path = "/game";
-        record listPetResponse(List<GameData> gameDataList) {
+        record listGameResponse(List<GameData> games) {
         }
-        return this.makeRequest("GET", path, null, listGames.class);
+        var res = this.makeRequest("GET", path, null, listGameResponse.class);
+        return res.games;
     }
 
     // login
     public AuthData login(UserData userData) {
         var path = "/session";
-        AuthData authData = makeRequest("POST", path, userData, AuthData.class);
-
+        return makeRequest("POST", path, userData, AuthData.class);
     }
 
     // logout
     public void logout(UserData userData) {
         var path = "/session";
-        AuthData authData = makeRequest("POST", path, userData, AuthData.class);
-
+        makeRequest("DELETE", path, null, null);
     }
 
     // register
     public AuthData register(UserData userData) {
-        var path = "/session";
-        AuthData authData = makeRequest("POST", path, userData, AuthData.class);
-
+        var path = "/user";
+        return makeRequest("POST", path, userData, AuthData.class);
     }
 
     // makeRequest
+    // request handler for http requests
     private <T> T makeRequest(String method, String path, Object req, Class<T> responseClass) throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();

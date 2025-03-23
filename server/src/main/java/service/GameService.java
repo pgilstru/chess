@@ -4,9 +4,9 @@ import chess.ChessGame;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
-import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
+import model.ResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
