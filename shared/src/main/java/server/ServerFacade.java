@@ -58,6 +58,11 @@ public class ServerFacade {
     }
 
     // register
+    public AuthData register(UserData userData) {
+        var path = "/session";
+        AuthData authData = makeRequest("POST", path, userData, AuthData.class);
+
+    }
 
     // makeRequest
     private <T> T makeRequest(String method, String path, Object req, Class<T> responseClass) throws ResponseException {
