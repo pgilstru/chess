@@ -51,6 +51,12 @@ public class ServerFacade {
     }
 
     // logout
+    public void logout(UserData userData) {
+        var path = "/session";
+        AuthData authData = makeRequest("POST", path, userData, AuthData.class);
+
+    }
+
     // register
 
     // makeRequest
