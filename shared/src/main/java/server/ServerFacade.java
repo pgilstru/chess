@@ -71,6 +71,7 @@ public class ServerFacade {
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
             http.setDoOutput(true);
+            // http.setRequestProperty("Accept", "application/json");
 
             writeBody(req, http);
             http.connect();
@@ -79,7 +80,7 @@ public class ServerFacade {
         } catch (ResponseException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new ResponseException(500, ex.getMessage());
+            throw new ResponseException(500, "Server communication error: " + ex.getMessage());
         }
     }
 
@@ -102,7 +103,7 @@ public class ServerFacade {
                 }
             }
 
-            throw new ResponseException(status, "other failure: " + status);
+            throw new ResponseException(status, "Server error: " + status);
         }
     }
 
@@ -121,6 +122,7 @@ public class ServerFacade {
 
 
     private boolean isSuccessful(int status) {
-        return status / 100 == 2;
+//        return status / 100 == 2;
+        return status >= 200 && status < 300;
     }
 }
