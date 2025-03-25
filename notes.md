@@ -186,6 +186,77 @@ To restart it run `brew services restart mysql`
 
 
 
+## Chess Application Structure
+
+```
+.
+├── client/
+│   └── src/main/java/
+│       ├── ui/
+│       │   ├── ChessClient.java
+│       │   └── EscapeSequences.java
+│       └── Main.java
+├── server/
+│   └── src/main/java/
+│       ├── dataaccess/
+│       │   ├── memory/
+│       │   │   ├── MemoryAuthDAO.java
+│       │   │   ├── MemoryGameDAO.java
+│       │   │   └── MemoryUserDAO.java
+│       │   ├── sql/
+│       │   │   ├── DatabaseManager.java
+│       │   │   ├── SQLAuthDAO.java
+│       │   │   ├── SQLGameDAO.java
+│       │   │   └── SQLUserDAO.java
+│       │   ├── AuthDAO.java
+│       │   ├── DataAccessException.java
+│       │   ├── GameDAO.java
+│       │   └── UserDAO.java
+│       ├── server/
+│       │   └── Server.java
+│       ├── service/
+│       │   ├── ClearService.java
+│       │   ├── GameService.java
+│       │   ├── UserService.java
+│       │   └── DatabaseUnavailableException.java
+│       ├── Main.java
+│       └── resources/
+│           ├── web/
+│           │   ├── favicon.ico
+│           │   ├── index.css
+│           │   ├── index.html
+│           │   └── index.js
+│           └── db.properties
+└── shared/
+    └── src/main/java/
+        ├── chess/
+        │   ├── piece/
+        │   │   ├── BishopMovesCalculator.java
+        │   │   ├── KingMovesCalculator.java
+        │   │   ├── KnightMovesCalculator.java
+        │   │   ├── PawnMovesCalculator.java
+        │   │   ├── QueenMovesCalculator.java
+        │   │   ├── RookMovesCalculator.java
+        │   │   ├── PieceMovesCalculator.java
+        │   │   ├── SingleStepMovesCalculator.java
+        │   │   └── SlidingMovesCalculator.java
+        │   ├── ChessBoard.java
+        │   ├── ChessGame.java
+        │   ├── ChessMove.java
+        │   ├── ChessPiece.java
+        │   ├── ChessPosition.java
+        │   └── InvalidMoveException.java
+        ├── model/
+        │   ├── AuthData.java
+        │   ├── GameData.java
+        │   ├── GameDetails.java
+        │   ├── JoinRequest.java
+        │   ├── ResponseException.java
+        │   └── UserData.java
+        └── server/
+            └── ServerFacade.java
+```
+
 # References: 
 
 ## Phase 3:
