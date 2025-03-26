@@ -199,6 +199,7 @@ public class Server {
 
         // convert HTTP request into Java usable objects and data
         GameData gameData = SERIALIZER.fromJson(req.body(), GameData.class);
+        System.out.println("the data: " + gameData);
 
         try {
             // call the appropriate service

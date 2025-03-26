@@ -27,6 +27,10 @@ public class PostLoginUI {
     // process user commands
     public String eval(String input) {
         try {
+            AuthData authData = chessClient.getAuthData();
+            System.out.println(authData.authToken());
+            server.setAuthToken(authData.authToken());
+
             var tokens = input.trim().split(" ");
             if (tokens.length == 0) {
                 // input is empty, call help
@@ -49,7 +53,7 @@ public class PostLoginUI {
                 default -> help();
             };
         } catch (ResponseException e) {
-            return "Error: problem processing user commands in PreLogin " + e.getMessage();
+            return "Error: problem processing user commands in PostLogin " + e.getMessage();
         }
     }
 
@@ -59,13 +63,14 @@ public class PostLoginUI {
         server.logout(authToken);
 
         // update chessClient sessionAuthData to be null (aka logged out)
-        chessClient.setAuthData(null);
+        chessClient.logout();
 
         return "You successfully logged out!";
     }
 
     private String listGames() throws ResponseException {
         // list all games that currently exist on the server
+        System.out.println("auth token?" + chessClient.getAuthData().authToken());
         List<GameData> games = server.listGames();
         if (games.isEmpty()) {
             // verify games exist
@@ -97,15 +102,17 @@ public class PostLoginUI {
             throw new ResponseException(400, "Must provide one argument. Expected: <NAME>");
         }
 
+        String gameName = params[0];
+
         // create game data (don't add user as a player, they must join)
-        GameData gameData = new GameData(0, null, null, params[0], null);
+        GameData gameData = new GameData(0, "", "", gameName, new ChessGame());
 
         AuthData authData = chessClient.getAuthData();
         String authToken = authData.authToken();
         // actually create the game in the server using the gameData
-        GameData game = server.createGame(gameData);
+        server.createGame(gameData);
 
-        return String.format("You successfully created the game! Game name: " + game.gameName());
+        return String.format("You successfully created the game! Game name: " + gameData.gameName());
     }
 
     private String joinGame(String... params) throws ResponseException {
@@ -175,7 +182,6 @@ public class PostLoginUI {
                logout - to logout when you are done
                quit - to quit playing chess
                help - to get help with possible commands
-               
                """;
     }
 }

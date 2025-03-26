@@ -47,12 +47,18 @@ public class PreLoginUI {
     private String register(String... params) throws ResponseException {
         // if all arguments provided, make them an account and transition to the PostLoginUI
         if (params.length < 3) {
-            throw new ResponseException(400, "Expected: <USERNAME> <PASSWORD> <EMAIL>");
+            throw new ResponseException(400, "Expected: <USERNAME> <PASSWORD> <EMAIL>\n");
         }
 
         // create new userData and register it
-        UserData userData = new UserData(params[0], params[1], params[2]);
-        AuthData authData = server.register(userData);
+        String username = params[0];
+        String password = params[1];
+        String email = params[2];
+        UserData userData = new UserData(username, password, email);
+
+        server.register(userData);
+
+        AuthData authData = server.login(userData);
 
         // update chessClient sessionAuthData
         chessClient.setAuthData(authData);
@@ -66,13 +72,15 @@ public class PreLoginUI {
         }
 
         // create new userData and login user
-        UserData userData = new UserData(params[0], params[1], null);
+        UserData userData = new UserData(params[0], params[1], params[2]);
     // !!!! COME BACK TO THIS ^^^^
 
         AuthData authData = server.login(userData);
+        System.out.println("tokennnn: " + authData.authToken());
 
         // update chessClient sessionAuthData
         chessClient.setAuthData(authData);
+        server.setAuthToken(authData.authToken());
         return String.format("You successfully logged in as: " + authData.username());
     }
 
@@ -84,7 +92,6 @@ public class PreLoginUI {
                login <USERNAME> <PASSWORD> - to play chess
                quit - to quit playing chess
                help - to get help with possible commands
-               
                """;
     }
 }

@@ -1,7 +1,6 @@
 package server;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSerializer;
 import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
@@ -16,7 +15,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 
 public class ServerFacade {
 
@@ -47,8 +45,8 @@ public class ServerFacade {
         if (gameData == null) {
             throw new ResponseException(400, "Must provide auth data");
         }
+
         var path = "/game";
-//        return this.makeRequest("POST", path, gameData, GameData.class, authToken);
         GameData res = null;
         try {
             res = this.makeRequest("POST", path, gameData, GameData.class, authToken);
@@ -65,7 +63,6 @@ public class ServerFacade {
             throw new ResponseException(401, "user not logged in");
         }
         var path = "/game";
-//        this.makeRequest("PUT", path, joinRequest, null, null);
         try {
             this.makeRequest("PUT", path, joinRequest, null, authToken);
         } catch (ResponseException e) {
@@ -76,25 +73,28 @@ public class ServerFacade {
 
     // listGames
     public List<GameData> listGames() {
+        System.out.println("auth token: " + authToken);
         if (authToken == null || authToken.isEmpty()) {
             throw new ResponseException(401, "user not logged in");
         }
 
         var path = "/game";
-//        Map<String, List<GameData>> res = this.makeRequest("GET", path, null, new TypeToken);
         record listGameResponse(List<GameData> games) {
         }
-
-//        listGameResponse res = this.makeRequest("GET", path, null, listGameResponse.class, authToken);
-//        return res.games;
 
         listGameResponse res = null;
         try {
             res = this.makeRequest("GET", path, null, listGameResponse.class, authToken);
         } catch (ResponseException e) {
             // Handle exception if needed
-            System.out.println("Error during createGame: " + e.getMessage());
+            System.out.println("Error during listGame: " + e.getMessage());
         }
+
+        if (res == null || res.games() == null) {
+            // return empty list
+            return List.of();
+        }
+
         return res.games;
     }
 
@@ -122,8 +122,12 @@ public class ServerFacade {
 
     // register
     public AuthData register(UserData userData) {
+        System.out.println("Attempting to register user: " + userData.username());
+
         var path = "/user";
-        return makeRequest("POST", path, userData, AuthData.class, null);
+        var response = makeRequest("POST", path, userData, AuthData.class, null);
+        System.out.println("Register response: " + response);
+        return response;
     }
 
     // makeRequest
@@ -133,6 +137,7 @@ public class ServerFacade {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
+            System.out.println(method);
             http.setDoOutput(true);
 
 
@@ -141,6 +146,8 @@ public class ServerFacade {
             }
 
             writeBody(req, http);
+            System.out.println("Request sent successfully");
+
             http.connect();
             throwIfUnsuccessful(http);
             return readBody(http, responseClass);
@@ -152,11 +159,20 @@ public class ServerFacade {
     }
 
     private static void writeBody(Object request, HttpURLConnection http) throws IOException {
+        System.out.println(request);
         if (request != null) {
             http.addRequestProperty("Content-Type", "application/json");
             String reqData = new Gson().toJson(request);
-            try (OutputStream reqBody = http.getOutputStream()) {
+
+            System.out.println("request data: " + reqData);
+            try {
+                OutputStream reqBody = http.getOutputStream();
                 reqBody.write(reqData.getBytes());
+                reqBody.close();
+                System.out.println("successfully written");
+            } catch (IOException e) {
+                System.out.println("Error writing req body: " + e.getMessage());
+                throw e;
             }
         }
     }

@@ -4,6 +4,7 @@ import server.ServerFacade;
 
 import java.util.Scanner;
 
+
 public class Repl {
 
     private final ChessClient client;
@@ -12,6 +13,9 @@ public class Repl {
     public Repl(String serverUrl) {
         this.client = new ChessClient(serverUrl);
         this.server = new ServerFacade(serverUrl);
+
+//        server = new Server();
+//        var port = server.run(0);
     }
 
     public void run() {
@@ -22,14 +26,15 @@ public class Repl {
 
         var result = "";
 
+        while (!result.equals("quit")) {
         // loop until user logs in
         while (client.getAuthData() == null) {
-            System.out.print(">>> ");
+            System.out.print("\n>>> ");
             String line = scanner.nextLine();
 
             try {
-                result = new PreLoginUI(client, server).eval(line);
-                System.out.println(result);
+                result = client.eval(line);
+                System.out.print(result);
             } catch (Throwable e) {
                 System.out.println("Error: " + e.getMessage());
             }
@@ -37,12 +42,12 @@ public class Repl {
 
         PostLoginUI postLoginUI = new PostLoginUI(client, server);
 
-        while (!result.equals("quit")) {
-            System.out.print(">>> ");
+//        while (!result.equals("quit")) {
+            System.out.print("\n>>> ");
             String line = scanner.nextLine();
 
             try {
-                result = preLoginUI.eval(line);
+                result = postLoginUI.eval(line);
                 System.out.println(result);
             } catch (Throwable e) {
                 var msg = e.toString();

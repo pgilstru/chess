@@ -10,14 +10,14 @@ import java.util.Arrays;
 public class ChessClient {
 
     private final ServerFacade server;
-//    private final String serverUrl;
+    private final String serverUrl;
     // stores authData after logging in or registering
     private AuthData sessionAuthData;
 
     public ChessClient(String serverUrl) {
         // initialize connection to the server
-        this.server = new ServerFacade(serverUrl);
-//        this.serverUrl = serverUrl;
+        server = new ServerFacade(serverUrl);
+        this.serverUrl = serverUrl;
     }
 
     // way to process user input and send it to applicable ui
@@ -44,5 +44,10 @@ public class ChessClient {
 
     public AuthData getAuthData() {
         return sessionAuthData;
+    }
+
+    public void logout() {
+        this.sessionAuthData = null;
+        server.setAuthToken(null);
     }
 }
