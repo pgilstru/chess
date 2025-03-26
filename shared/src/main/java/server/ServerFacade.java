@@ -79,12 +79,12 @@ public class ServerFacade {
         }
 
         var path = "/game";
-        record listGameResponse(List<GameData> games) {
+        record ListGameResponse(List<GameData> games) {
         }
 
-        listGameResponse res = null;
+        ListGameResponse res = null;
         try {
-            res = this.makeRequest("GET", path, null, listGameResponse.class, authToken);
+            res = this.makeRequest("GET", path, null, ListGameResponse.class, authToken);
         } catch (ResponseException e) {
             // Handle exception if needed
             System.out.println("Error during listGame: " + e.getMessage());
