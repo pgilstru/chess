@@ -31,9 +31,14 @@ public class ServerFacade {
         this.authToken = authToken;
     }
 
+    public String getAuthToken() {
+        return authToken;
+    }
+
     public void clearDB() throws ResponseException {
         var path = "/db";
         this.makeRequest("DELETE", path, null, null, null);
+        setAuthToken(null);
     }
 
     // createGame
@@ -71,13 +76,26 @@ public class ServerFacade {
 
     // listGames
     public List<GameData> listGames() {
+        if (authToken == null || authToken.isEmpty()) {
+            throw new ResponseException(401, "user not logged in");
+        }
+
         var path = "/game";
 //        Map<String, List<GameData>> res = this.makeRequest("GET", path, null, new TypeToken);
         record listGameResponse(List<GameData> games) {
         }
-        var res = this.makeRequest("GET", path, null, listGameResponse.class, null);
+
+//        listGameResponse res = this.makeRequest("GET", path, null, listGameResponse.class, authToken);
+//        return res.games;
+
+        listGameResponse res = null;
+        try {
+            res = this.makeRequest("GET", path, null, listGameResponse.class, authToken);
+        } catch (ResponseException e) {
+            // Handle exception if needed
+            System.out.println("Error during createGame: " + e.getMessage());
+        }
         return res.games;
-//        return res.get("games");
     }
 
     // login
@@ -87,8 +105,8 @@ public class ServerFacade {
     }
 
     // logout
-    public void logout(String authToken) {
-        if (authToken == null || authToken.isEmpty()) {
+    public void logout(String token) {
+        if (token == null || token.isEmpty()) {
             throw new ResponseException(401, "user not logged in");
         }
         var path = "/session";
@@ -98,6 +116,8 @@ public class ServerFacade {
             // Handle exception if needed
             System.out.println("Error during logout: " + e.getMessage());
         }
+
+        setAuthToken(null);
     }
 
     // register

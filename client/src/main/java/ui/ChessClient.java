@@ -45,9 +45,4 @@ public class ChessClient {
     public AuthData getAuthData() {
         return sessionAuthData;
     }
-
-//    public void logout() {
-//        // clear the authData when user logs out
-//        this.sessionAuthData = null;
-//    }
 }
