@@ -33,7 +33,6 @@ public class PostLoginUI {
 
             // user not authenticated,
             return switch (cmd) {
-                case "help" -> help();
                 case "logout" -> logout();
                 case "create" -> createGame();
                 case "list" -> listGames();
@@ -45,5 +44,21 @@ public class PostLoginUI {
         } catch (ResponseException e) {
             return "Error: problem processing user commands in PreLogin " + e.getMessage();
         }
+    }
+
+
+
+    private String help() {
+        // display list of available commands the user can use/actions they can take
+        return """
+               create <NAME> - to create a game
+               list - to list all games
+               join <ID> [WHITE|BLACK] - to join a game
+               observe <ID> - to observe a game
+               logout - to logout when you are done
+               quit - to quit playing chess
+               help - to get help with possible commands
+               
+               """;
     }
 }
