@@ -39,6 +39,7 @@ public class ChessClient {
     public void setAuthData(AuthData authData) {
         // when session starts, set the authdata
         this.sessionAuthData = authData;
+        server.setAuthToken(authData.authToken());
     }
 
     public AuthData getAuthData() {

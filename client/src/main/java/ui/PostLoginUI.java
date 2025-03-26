@@ -1,7 +1,9 @@
 package ui;
 
+import chess.ChessBoard;
 import chess.ChessGame;
 import com.google.gson.Gson;
+import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
 import model.ResponseException;
@@ -98,6 +100,8 @@ public class PostLoginUI {
         // create game data (don't add user as a player, they must join)
         GameData gameData = new GameData(0, null, null, params[0], null);
 
+        AuthData authData = chessClient.getAuthData();
+        String authToken = authData.authToken();
         // actually create the game in the server using the gameData
         GameData game = server.createGame(gameData);
 
@@ -114,7 +118,7 @@ public class PostLoginUI {
 
         // verify game exists
         for (var game : server.listGames()) {
-            if (game.gameID() != gameID) {
+            if (!(game.gameID() == gameID)) {
                 throw new ResponseException(400, "Must provide a valid gameID");
             }
         }
@@ -123,6 +127,11 @@ public class PostLoginUI {
 
         // add user to the specified game
         server.joinGame(joinRequest);
+
+        // show the chessboard
+        ChessBoard chessBoard = new ChessBoard();
+        ChessGame.TeamColor color = joinRequest.playerColor();
+        GameplayUI.drawChessboard(chessBoard, color);
 
         return String.format("You successfully joined the game! gameID: " + joinRequest.gameID());
     }

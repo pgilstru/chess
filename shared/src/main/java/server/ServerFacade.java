@@ -1,6 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSerializer;
 import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
@@ -15,63 +16,109 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 public class ServerFacade {
 
     private final String serverUrl;
+    private String authToken;
 
     public ServerFacade(String url) {
         this.serverUrl = url;
     }
 
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    public void clearDB() throws ResponseException {
+        var path = "/db";
+        this.makeRequest("DELETE", path, null, null, null);
+    }
+
     // createGame
     public GameData createGame(GameData gameData) {
+
+        if (gameData == null) {
+            throw new ResponseException(400, "Must provide auth data");
+        }
         var path = "/game";
-        return this.makeRequest("POST", path, gameData, GameData.class);
+//        return this.makeRequest("POST", path, gameData, GameData.class, authToken);
+        GameData res = null;
+        try {
+            res = this.makeRequest("POST", path, gameData, GameData.class, authToken);
+        } catch (ResponseException e) {
+            // Handle exception if needed
+            System.out.println("Error during createGame: " + e.getMessage());
+        }
+        return res;
     }
 
     // joinGame
     public void joinGame(JoinRequest joinRequest) {
+        if (authToken == null || authToken.isEmpty()) {
+            throw new ResponseException(401, "user not logged in");
+        }
         var path = "/game";
-        this.makeRequest("PUT", path, joinRequest, null);
+//        this.makeRequest("PUT", path, joinRequest, null, null);
+        try {
+            this.makeRequest("PUT", path, joinRequest, null, authToken);
+        } catch (ResponseException e) {
+            // Handle exception if needed
+            System.out.println("Error during logout: " + e.getMessage());
+        }
     }
 
     // listGames
     public List<GameData> listGames() {
         var path = "/game";
+//        Map<String, List<GameData>> res = this.makeRequest("GET", path, null, new TypeToken);
         record listGameResponse(List<GameData> games) {
         }
-        var res = this.makeRequest("GET", path, null, listGameResponse.class);
+        var res = this.makeRequest("GET", path, null, listGameResponse.class, null);
         return res.games;
+//        return res.get("games");
     }
 
     // login
     public AuthData login(UserData userData) {
         var path = "/session";
-        return makeRequest("POST", path, userData, AuthData.class);
+        return makeRequest("POST", path, userData, AuthData.class, null);
     }
 
     // logout
     public void logout(String authToken) {
+        if (authToken == null || authToken.isEmpty()) {
+            throw new ResponseException(401, "user not logged in");
+        }
         var path = "/session";
-        makeRequest("DELETE", path, null, null);
+        try {
+            this.makeRequest("DELETE", path, null, null, authToken);
+        } catch (ResponseException e) {
+            // Handle exception if needed
+            System.out.println("Error during logout: " + e.getMessage());
+        }
     }
 
     // register
     public AuthData register(UserData userData) {
         var path = "/user";
-        return makeRequest("POST", path, userData, AuthData.class);
+        return makeRequest("POST", path, userData, AuthData.class, null);
     }
 
     // makeRequest
     // request handler for http requests
-    private <T> T makeRequest(String method, String path, Object req, Class<T> responseClass) throws ResponseException {
+    private <T> T makeRequest(String method, String path, Object req, Class<T> responseClass, String authToken) throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
             http.setDoOutput(true);
-            // http.setRequestProperty("Accept", "application/json");
+
+
+            if (authToken != null && !authToken.isEmpty()) {
+                http.setRequestProperty("authorization", "Bearer " + authToken);
+            }
 
             writeBody(req, http);
             http.connect();
