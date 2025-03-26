@@ -52,7 +52,7 @@ public class ServerFacade {
     }
 
     // logout
-    public void logout(UserData userData) {
+    public void logout(String authToken) {
         var path = "/session";
         makeRequest("DELETE", path, null, null);
     }

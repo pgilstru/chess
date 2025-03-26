@@ -36,7 +36,7 @@ public class PreLoginUI {
             return switch (cmd) {
                 case "register" -> register(params);
                 case "login" -> login(params);
-                case "quit" -> quit();
+                case "quit" -> "quit";
                 default -> help();
             };
         } catch (ResponseException e) {
@@ -59,9 +59,27 @@ public class PreLoginUI {
         return String.format("You successfully registered! Logged in as: " + authData.username());
     }
 
+    private String login(String... params) throws ResponseException {
+        // if all arguments provided, attempt to log them in
+        if (params.length < 2) {
+            throw new ResponseException(400, "Expected: <USERNAME> <PASSWORD>");
+        }
+
+        // create new userData and login user
+        UserData userData = new UserData(params[0], params[1], null);
+    // !!!! COME BACK TO THIS ^^^^
+
+        AuthData authData = server.login(userData);
+
+        // update chessClient sessionAuthData
+        chessClient.setAuthData(authData);
+        return String.format("You successfully logged in as: " + authData.username());
+    }
+
     private String help() {
         // display list of available commands the user can use/actions they can take
         return """
+               Available commands:
                register <USERNAME> <PASSWORD> <EMAIL> - to create an account
                login <USERNAME> <PASSWORD> - to play chess
                quit - to quit playing chess
