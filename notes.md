@@ -194,7 +194,9 @@ To restart it run `brew services restart mysql`
 │   └── src/main/java/
 │       ├── ui/
 │       │   ├── ChessClient.java
-│       │   └── EscapeSequences.java
+│       │   ├── EscapeSequences.java
+│       │   ├── PostLoginUI.java
+│       │   └── PreLoginUI.java
 │       └── Main.java
 ├── server/
 │   └── src/main/java/
