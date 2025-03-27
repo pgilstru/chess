@@ -13,9 +13,6 @@ public class Repl {
     public Repl(String serverUrl) {
         this.client = new ChessClient(serverUrl);
         this.server = new ServerFacade(serverUrl);
-
-//        server = new Server();
-//        var port = server.run(0);
     }
 
     public void run() {
@@ -27,20 +24,20 @@ public class Repl {
         var result = "";
 
         while (!result.equals("quit")) {
-        // loop until user logs in
-        while (client.getAuthData() == null) {
-            System.out.print("\n>>> ");
-            String line = scanner.nextLine();
+            // loop until user logs in
+            while (client.getAuthData() == null) {
+                System.out.print("\n>>> ");
+                String line = scanner.nextLine();
 
-            try {
-                result = client.eval(line);
-                System.out.print(result);
-            } catch (Throwable e) {
-                System.out.println("Error: " + e.getMessage());
+                try {
+                    result = client.eval(line);
+                    System.out.print(result);
+                } catch (Throwable e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
             }
-        }
 
-        PostLoginUI postLoginUI = new PostLoginUI(client, server);
+            PostLoginUI postLoginUI = new PostLoginUI(client, server);
 
 //        while (!result.equals("quit")) {
             System.out.print("\n>>> ");

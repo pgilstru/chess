@@ -27,17 +27,14 @@ public class Server {
 
     public Server() {
         try {
-            AuthDAO authDAO = new SQLAuthDAO();
-            UserDAO userDAO = new SQLUserDAO();
-            GameDAO gameDAO = new SQLGameDAO();
+            this.authDAO = new SQLAuthDAO();
+            this.userDAO = new SQLUserDAO();
+            this.gameDAO = new SQLGameDAO();
 
             // initialize services
             this.clearService = new ClearService(userDAO, authDAO, gameDAO);
             this.userService = new UserService(userDAO, authDAO);
             this.gameService = new GameService(gameDAO, authDAO);
-            this.authDAO = authDAO;
-            this.userDAO = userDAO;
-            this.gameDAO = gameDAO;
 
             this.unAuth = HttpURLConnection.HTTP_UNAUTHORIZED;
             this.internalErr = HttpURLConnection.HTTP_INTERNAL_ERROR;

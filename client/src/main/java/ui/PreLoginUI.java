@@ -56,9 +56,9 @@ public class PreLoginUI {
         String email = params[2];
         UserData userData = new UserData(username, password, email);
 
-        server.register(userData);
+        AuthData authData = server.register(userData);
 
-        AuthData authData = server.login(userData);
+//        AuthData authData = server.login(userData);
 
         // update chessClient sessionAuthData
         chessClient.setAuthData(authData);
