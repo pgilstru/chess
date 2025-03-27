@@ -108,7 +108,7 @@ public class ServerFacadeTests {
 
         GameData gameData = new GameData(0, null, null, "game", null);
 
-        facade.createGame(gameData);
+        facade.createGame(gameData, facade.getAuthToken());
 
         List<GameData> games = facade.listGames();
         Assertions.assertNotNull(games);
@@ -118,7 +118,7 @@ public class ServerFacadeTests {
     void createGameFailInvalidGameData() throws Exception {
         // attempt to create a game without logging in (should fail)
         Assertions.assertThrows(ResponseException.class, () -> {
-            facade.createGame(null);
+            facade.createGame(null, facade.getAuthToken());
         });
     }
 
@@ -132,8 +132,8 @@ public class ServerFacadeTests {
         GameData gameData = new GameData(0, null, null, "game", null);
         GameData gameData2 = new GameData(1, null, null, "game", null);
 
-        facade.createGame(gameData);
-        facade.createGame(gameData2);
+        facade.createGame(gameData, facade.getAuthToken());
+        facade.createGame(gameData2, facade.getAuthToken());
 
         List<GameData> games = facade.listGames();
         Assertions.assertNotNull(games);
@@ -156,7 +156,7 @@ public class ServerFacadeTests {
         facade.setAuthToken(authData.authToken());
 
         GameData gameData = new GameData(0, null, null, "game", null);
-        facade.createGame(gameData);
+        facade.createGame(gameData, facade.getAuthToken());
 
         JoinRequest joinRequest = new JoinRequest(ChessGame.TeamColor.WHITE, gameData.gameID());
         facade.joinGame(joinRequest);

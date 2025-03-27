@@ -40,7 +40,7 @@ public class ServerFacade {
     }
 
     // createGame
-    public GameData createGame(GameData gameData) {
+    public GameData createGame(GameData gameData, String authtoken) {
 
         if (gameData == null) {
             throw new ResponseException(400, "Must provide auth data");
@@ -49,7 +49,7 @@ public class ServerFacade {
         var path = "/game";
         GameData res = null;
         try {
-            res = this.makeRequest("POST", path, gameData, GameData.class, authToken);
+            res = this.makeRequest("POST", path, gameData, GameData.class, authtoken);
         } catch (ResponseException e) {
             // Handle exception if needed
             System.out.println("Error during createGame: " + e.getMessage());
@@ -62,18 +62,19 @@ public class ServerFacade {
         if (authToken == null || authToken.isEmpty()) {
             throw new ResponseException(401, "user not logged in");
         }
+
         var path = "/game";
+
         try {
             this.makeRequest("PUT", path, joinRequest, null, authToken);
         } catch (ResponseException e) {
             // Handle exception if needed
-            System.out.println("Error during logout: " + e.getMessage());
+            System.out.println("Error during join game: " + e.getMessage());
         }
     }
 
     // listGames
     public List<GameData> listGames() {
-        System.out.println("auth token: " + authToken);
         if (authToken == null || authToken.isEmpty()) {
             throw new ResponseException(401, "user not logged in");
         }
@@ -122,11 +123,8 @@ public class ServerFacade {
 
     // register
     public AuthData register(UserData userData) {
-        System.out.println("Attempting to register user: " + userData.username());
-
         var path = "/user";
         var response = makeRequest("POST", path, userData, AuthData.class, null);
-        System.out.println("Register response: " + response);
         return response;
     }
 
@@ -137,19 +135,17 @@ public class ServerFacade {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
-            System.out.println(method);
             http.setDoOutput(true);
 
 
             if (authToken != null && !authToken.isEmpty()) {
-                http.setRequestProperty("authorization", "Bearer " + authToken);
+                http.setRequestProperty("authorization", authToken);
             }
 
             writeBody(req, http);
-            System.out.println("Request sent successfully");
 
             http.connect();
-            throwIfUnsuccessful(http);
+//            throwIfUnsuccessful(http);
             return readBody(http, responseClass);
         } catch (ResponseException ex) {
             throw ex;
@@ -159,17 +155,17 @@ public class ServerFacade {
     }
 
     private static void writeBody(Object request, HttpURLConnection http) throws IOException {
-        System.out.println(request);
+
         if (request != null) {
             http.addRequestProperty("Content-Type", "application/json");
             String reqData = new Gson().toJson(request);
 
-            System.out.println("request data: " + reqData);
+
             try {
                 OutputStream reqBody = http.getOutputStream();
                 reqBody.write(reqData.getBytes());
                 reqBody.close();
-                System.out.println("successfully written");
+
             } catch (IOException e) {
                 System.out.println("Error writing req body: " + e.getMessage());
                 throw e;

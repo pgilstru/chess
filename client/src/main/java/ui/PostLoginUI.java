@@ -28,7 +28,7 @@ public class PostLoginUI {
     public String eval(String input) {
         try {
             AuthData authData = chessClient.getAuthData();
-            System.out.println(authData.authToken());
+
             server.setAuthToken(authData.authToken());
 
             var tokens = input.trim().split(" ");
@@ -70,7 +70,6 @@ public class PostLoginUI {
 
     private String listGames() throws ResponseException {
         // list all games that currently exist on the server
-        System.out.println("auth token?" + chessClient.getAuthData().authToken());
         List<GameData> games = server.listGames();
         if (games.isEmpty()) {
             // verify games exist
@@ -80,16 +79,16 @@ public class PostLoginUI {
         // use stringbuilder to format our list for the ui
         StringBuilder result = new StringBuilder();
 
-        int num = 0;
+        int num = 1;
 
         for (GameData game : games) {
             String gameName = game.gameName();
-            String whiteUser = (game.whiteUsername() != null ? game.whiteUsername() : "No white user yet");
-            String blackUser = (game.blackUsername() != null ? game.blackUsername() : "No black user yet");
+            String whiteUser = (!Objects.equals(game.whiteUsername(), "") ? game.whiteUsername() : "No white user yet");
+            String blackUser = (!Objects.equals(game.blackUsername(), "") ? game.blackUsername() : "No black user yet");
 
             // add each game to the result list string
             result.append(String.format(
-                    num++ + ". Name: " + gameName + ", White: " + whiteUser + ", Black: " + blackUser
+                    num++ + ". Name: " + gameName + ", White: " + whiteUser + ", Black: " + blackUser + '\n'
             ));
         }
 
@@ -110,45 +109,56 @@ public class PostLoginUI {
         AuthData authData = chessClient.getAuthData();
         String authToken = authData.authToken();
         // actually create the game in the server using the gameData
-        server.createGame(gameData);
+        server.createGame(gameData, authToken);
 
         return String.format("You successfully created the game! Game name: " + gameData.gameName());
     }
 
     private String joinGame(String... params) throws ResponseException {
-        // adds user to the game as long as parameters (gameID, playerColor) were provided
-        if (params.length != 2) {
-            throw new ResponseException(400, "Expected: <ID> [WHITE|BLACK]");
-        }
+        try {
+            // adds user to the game as long as parameters (gameID, playerColor) were provided
+            if (params.length != 2) {
+                throw new ResponseException(400, "Expected: <ID> [WHITE|BLACK]");
+            }
 
-        int gameID = Integer.parseInt(params[0]);
+            int gameID = Integer.parseInt(params[0]);
 
-        // verify game exists
-        for (var game : server.listGames()) {
-            if (!(game.gameID() == gameID)) {
+            // verify game exists
+            boolean exists = false;
+            for (var game : server.listGames()) {
+                if (game.gameID() == gameID) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
                 throw new ResponseException(400, "Must provide a valid gameID");
             }
+
+            JoinRequest joinRequest = getJoinRequest(params, gameID);
+
+            // add user to the specified game
+            server.joinGame(joinRequest);
+
+            // show the chessboard
+            ChessBoard chessBoard = new ChessBoard();
+            chessBoard.resetBoard();
+            ChessGame.TeamColor color = joinRequest.playerColor();
+            GameplayUI.drawChessboard(chessBoard, color);
+
+            return String.format("You successfully joined the game! gameID: " + joinRequest.gameID());
+        } catch (ResponseException e) {
+            throw new RuntimeException("Must provide a valid gameID");
         }
-
-        JoinRequest joinRequest = getJoinRequest(params, gameID);
-
-        // add user to the specified game
-        server.joinGame(joinRequest);
-
-        // show the chessboard
-        ChessBoard chessBoard = new ChessBoard();
-        ChessGame.TeamColor color = joinRequest.playerColor();
-        GameplayUI.drawChessboard(chessBoard, color);
-
-        return String.format("You successfully joined the game! gameID: " + joinRequest.gameID());
     }
 
     private static JoinRequest getJoinRequest(String[] params, int gameID) {
         ChessGame.TeamColor playerColor;
-        if (Objects.equals(params[1], "white")) {
+        if (Objects.equals(params[1].toLowerCase(), "white")) {
             // provided color is white
             playerColor = ChessGame.TeamColor.WHITE;
-        } else if (Objects.equals(params[1], "black")) {
+        } else if (Objects.equals(params[1].toLowerCase(), "black")) {
             // provided color is black
             playerColor = ChessGame.TeamColor.BLACK;
         } else {

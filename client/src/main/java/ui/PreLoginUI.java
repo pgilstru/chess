@@ -45,43 +45,50 @@ public class PreLoginUI {
     }
 
     private String register(String... params) throws ResponseException {
-        // if all arguments provided, make them an account and transition to the PostLoginUI
-        if (params.length < 3) {
-            throw new ResponseException(400, "Expected: <USERNAME> <PASSWORD> <EMAIL>\n");
-        }
+        try {
+            // if all arguments provided, make them an account and transition to the PostLoginUI
+            if (params.length < 3) {
+                throw new ResponseException(400, "Expected: <USERNAME> <PASSWORD> <EMAIL>\n");
+            }
 
-        // create new userData and register it
-        String username = params[0];
-        String password = params[1];
-        String email = params[2];
-        UserData userData = new UserData(username, password, email);
+            // create new userData and register it
+            String username = params[0];
+            String password = params[1];
+            String email = params[2];
+            UserData userData = new UserData(username, password, email);
 
-        AuthData authData = server.register(userData);
+            AuthData authData = server.register(userData);
 
 //        AuthData authData = server.login(userData);
 
-        // update chessClient sessionAuthData
-        chessClient.setAuthData(authData);
-        return String.format("You successfully registered! Logged in as: " + authData.username());
+            // update chessClient sessionAuthData
+            chessClient.setAuthData(authData);
+            return String.format("You successfully registered! Logged in as: " + authData.username());
+        } catch (ResponseException e) {
+            throw new RuntimeException("Username already taken.");
+        }
     }
 
     private String login(String... params) throws ResponseException {
         // if all arguments provided, attempt to log them in
-        if (params.length < 2) {
-            throw new ResponseException(400, "Expected: <USERNAME> <PASSWORD>");
+        try {
+            if (params.length != 2) {
+                throw new ResponseException(400, "Expected: <USERNAME> <PASSWORD>");
+            }
+
+            // create new userData and login user
+            UserData userData = new UserData(params[0], params[1], null);
+            // !!!! COME BACK TO THIS ^^^^
+
+            AuthData authData = server.login(userData);
+
+            // update chessClient sessionAuthData
+            chessClient.setAuthData(authData);
+            server.setAuthToken(authData.authToken());
+            return String.format("You successfully logged in as: " + authData.username());
+        } catch (ResponseException e) {
+            throw new RuntimeException("Username or password is incorrect.");
         }
-
-        // create new userData and login user
-        UserData userData = new UserData(params[0], params[1], params[2]);
-    // !!!! COME BACK TO THIS ^^^^
-
-        AuthData authData = server.login(userData);
-        System.out.println("tokennnn: " + authData.authToken());
-
-        // update chessClient sessionAuthData
-        chessClient.setAuthData(authData);
-        server.setAuthToken(authData.authToken());
-        return String.format("You successfully logged in as: " + authData.username());
     }
 
     private String help() {

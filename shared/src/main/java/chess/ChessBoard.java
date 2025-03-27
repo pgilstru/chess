@@ -46,6 +46,13 @@ public class ChessBoard {
         return squares[position.getRow()][position.getColumn()];
     }
 
+    @Override
+    public String toString() {
+        return "ChessBoard{" +
+                "squares=" + Arrays.deepToString(squares) +
+                '}';
+    }
+
     /**
      * Sets the board to the default starting board
      * (How the game of chess normally starts)

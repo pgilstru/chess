@@ -2,29 +2,36 @@ package ui;
 
 import chess.*;
 
+import java.util.Arrays;
+
 public class GameplayUI {
 
     public static void drawChessboard(ChessBoard chessBoard, ChessGame.TeamColor playerColor) {
-        // get players perspective
-        boolean whitePerspective = playerColor != ChessGame.TeamColor.BLACK;
+        boolean whitePerspective = (playerColor == ChessGame.TeamColor.WHITE); // Fix the perspective flag
 
-        // draw the chessboard from the player's perspective
         String[][] board = new String[8][8];
-
         fillOutBoard(chessBoard, board);
+
+        if (!whitePerspective) {
+            board = flipBoard(board); // Flip rows only for black's perspective
+        }
+
+        // Print chessboard based on player's perspective
+        printChessboard(board, whitePerspective, chessBoard);
+
+    }
+
+    private static void printChessboard(String[][] board, boolean whitePerspective, ChessBoard chessBoard) {
+        System.out.println(EscapeSequences.ERASE_SCREEN); // Clear screen before printing
 
         // check the perspective and update the board's perspective as needed
         for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                if (!whitePerspective) {
-                    // user is not a whitePlayer or observingPlayer (use black perspective)
-                    board[row][col] = board[7 - row][7 - col];
-                }
+            if (whitePerspective) {
+                System.out.print((8-row) + " ");
+            } else {
+                System.out.print((row + 1) + " ");
             }
-        }
 
-        // then print the board accordingly
-        for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 // check if square is odd or even and set background color
                 if ((row + col) % 2 == 0) {
@@ -44,6 +51,22 @@ public class GameplayUI {
             // after every row, print a new line
             System.out.println();
         }
+
+        if (whitePerspective) {
+            System.out.println("   a  b  c  d  e  f  g  h");
+        } else {
+            System.out.println("   h  g  f  e  d  c  b  a");
+        }
+    }
+
+    private static String[][] flipBoard(String[][] board) {
+        String[][] flippedBoard = new String[8][8];
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                flippedBoard[row][col] = board[7 - row][7 - col]; // Flip both row & column
+            }
+        }
+        return flippedBoard;
     }
 
     private static void fillOutBoard(ChessBoard chessBoard, String[][] board) {
