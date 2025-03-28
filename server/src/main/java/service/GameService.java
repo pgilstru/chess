@@ -41,7 +41,9 @@ public class GameService {
             String whiteUser = gameData.whiteUsername();
             String blackUser = gameData.blackUsername();
             String gameName = gameData.gameName();
-            GameData newGame = new GameData(gameIDCounter++, whiteUser, blackUser, gameName, new ChessGame());
+            ChessGame chessGame = new ChessGame();
+
+            GameData newGame = new GameData(0, whiteUser, blackUser, gameName, chessGame);
             return gameDAO.createGame(newGame);
         } catch (DataAccessException e) {
             throw new RuntimeException(e);

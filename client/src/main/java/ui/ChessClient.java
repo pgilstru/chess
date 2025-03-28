@@ -6,6 +6,7 @@ import model.ResponseException;
 import server.ServerFacade;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class ChessClient {
 
@@ -49,5 +50,18 @@ public class ChessClient {
     public void logout() {
         this.sessionAuthData = null;
         server.setAuthToken(null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ChessClient that)) {
+            return false;
+        }
+        return Objects.equals(server, that.server) && Objects.equals(serverUrl, that.serverUrl) && Objects.equals(sessionAuthData, that.sessionAuthData);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(server, serverUrl, sessionAuthData);
     }
 }

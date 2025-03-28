@@ -58,15 +58,19 @@ public class ServerFacade {
     }
 
     // joinGame
-    public void joinGame(JoinRequest joinRequest) {
+    public void joinGame(JoinRequest joinRequest, String authtoken) {
         if (authToken == null || authToken.isEmpty()) {
             throw new ResponseException(401, "user not logged in");
+        }
+
+        if (joinRequest == null) {
+            throw new ResponseException(400, "Must provide join details");
         }
 
         var path = "/game";
 
         try {
-            this.makeRequest("PUT", path, joinRequest, null, authToken);
+            this.makeRequest("PUT", path, joinRequest, null, authtoken);
         } catch (ResponseException e) {
             // Handle exception if needed
             System.out.println("Error during join game: " + e.getMessage());

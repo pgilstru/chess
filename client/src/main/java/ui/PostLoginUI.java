@@ -2,7 +2,6 @@ package ui;
 
 import chess.ChessBoard;
 import chess.ChessGame;
-import com.google.gson.Gson;
 import model.AuthData;
 import model.GameData;
 import model.JoinRequest;
@@ -139,7 +138,9 @@ public class PostLoginUI {
             JoinRequest joinRequest = getJoinRequest(params, gameID);
 
             // add user to the specified game
-            server.joinGame(joinRequest);
+            AuthData authData = chessClient.getAuthData();
+            String authToken = authData.authToken();
+            server.joinGame(joinRequest, authToken);
 
             // show the chessboard
             ChessBoard chessBoard = new ChessBoard();
