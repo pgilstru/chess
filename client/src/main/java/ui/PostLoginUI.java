@@ -14,7 +14,6 @@ import java.util.Objects;
 
 public class PostLoginUI {
 
-    private GameData gameData;
     private final ChessClient chessClient;
     private final ServerFacade server;
 
@@ -26,10 +25,6 @@ public class PostLoginUI {
     // process user commands
     public String eval(String input) {
         try {
-            AuthData authData = chessClient.getAuthData();
-
-            server.setAuthToken(authData.authToken());
-
             var tokens = input.trim().split(" ");
             if (tokens.length == 0) {
                 // input is empty, call help
@@ -39,6 +34,7 @@ public class PostLoginUI {
             // make command lowercase to standardize the type of input we receive
             var cmd = tokens[0].toLowerCase();
 
+            // parameters to pass in for command methods
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
 
             // user not authenticated,
@@ -58,7 +54,7 @@ public class PostLoginUI {
 
     private String logout() throws ResponseException{
         // attempt to log out the user
-        String authToken = chessClient.getAuthData().authToken();
+        String authToken = server.getAuthToken();
         server.logout(authToken);
 
         // update chessClient sessionAuthData to be null (aka logged out)

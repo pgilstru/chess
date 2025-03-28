@@ -12,6 +12,7 @@ public class ChessClient {
 
     private final ServerFacade server;
     private final String serverUrl;
+
     // stores authData after logging in or registering
     private AuthData sessionAuthData;
 

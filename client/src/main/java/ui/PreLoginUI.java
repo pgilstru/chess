@@ -47,7 +47,7 @@ public class PreLoginUI {
     private String register(String... params) throws ResponseException {
         try {
             // if all arguments provided, make them an account and transition to the PostLoginUI
-            if (params.length < 3) {
+            if (params.length != 3) {
                 throw new ResponseException(400, "Expected: <USERNAME> <PASSWORD> <EMAIL>\n");
             }
 
@@ -58,8 +58,6 @@ public class PreLoginUI {
             UserData userData = new UserData(username, password, email);
 
             AuthData authData = server.register(userData);
-
-//        AuthData authData = server.login(userData);
 
             // update chessClient sessionAuthData
             chessClient.setAuthData(authData);
@@ -78,13 +76,11 @@ public class PreLoginUI {
 
             // create new userData and login user
             UserData userData = new UserData(params[0], params[1], null);
-            // !!!! COME BACK TO THIS ^^^^
 
             AuthData authData = server.login(userData);
 
             // update chessClient sessionAuthData
             chessClient.setAuthData(authData);
-            server.setAuthToken(authData.authToken());
             return String.format("You successfully logged in as: " + authData.username());
         } catch (ResponseException e) {
             throw new RuntimeException("Username or password is incorrect.");
