@@ -110,24 +110,17 @@ public class PostLoginUI {
     }
 
     private String joinGame(String... params) throws ResponseException {
-        try {
-            // adds user to the game as long as parameters (gameID, playerColor) were provided
-            if (params.length != 2) {
-                throw new ResponseException(400, "Expected: <ID> [WHITE|BLACK]");
-            }
+        // adds user to the game as long as parameters (gameID, playerColor) were provided
+        if (params.length != 2) {
+            throw new ResponseException(400, "Expected: <ID> [WHITE|BLACK]");
+        }
 
+        try {
             int gameID = Integer.parseInt(params[0]);
+            GameData game = getGame(gameID);
 
             // verify game exists
-            boolean exists = false;
-            for (var game : server.listGames()) {
-                if (game.gameID() == gameID) {
-                    exists = true;
-                    break;
-                }
-            }
-
-            if (!exists) {
+            if (game == null) {
                 throw new ResponseException(400, "Must provide a valid gameID");
             }
 
@@ -176,6 +169,16 @@ public class PostLoginUI {
         // implement functionality in next phase!
 
         return String.format("You are successfully observing the game! gameID: " + gameID);
+    }
+
+    private GameData getGame(int gameID) throws ResponseException {
+        for (var game : server.listGames()) {
+            if (game.gameID() == gameID) {
+                return game;
+            }
+        }
+
+        return null;
     }
 
     private String help() {
