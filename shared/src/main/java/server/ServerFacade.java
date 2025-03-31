@@ -59,21 +59,22 @@ public class ServerFacade {
 
     // joinGame
     public void joinGame(JoinRequest joinRequest, String authtoken) {
-        if (authToken == null || authToken.isEmpty()) {
-            throw new ResponseException(401, "user not logged in");
-        }
-
-        if (joinRequest == null) {
-            throw new ResponseException(400, "Must provide join details");
-        }
-
-        var path = "/game";
-
         try {
-            this.makeRequest("PUT", path, joinRequest, null, authtoken);
+            if (authToken == null || authToken.isEmpty()) {
+                throw new ResponseException(401, "user not logged in");
+            }
+
+            if (joinRequest == null) {
+                throw new ResponseException(400, "Must provide join details");
+            }
+
+            var path = "/game";
+
+            this.makeRequest("PUT", path, joinRequest, null, authToken);
         } catch (ResponseException e) {
             // Handle exception if needed
             System.out.println("Error during join game: " + e.getMessage());
+            throw new ResponseException(500, "error during join game");
         }
     }
 
@@ -111,9 +112,9 @@ public class ServerFacade {
 
     // logout
     public void logout(String token) {
-        if (token == null || token.isEmpty()) {
-            throw new ResponseException(401, "user not logged in");
-        }
+//        if (token == null || token.isEmpty()) {
+//            throw new ResponseException(401, "user not logged in");
+//        }
         var path = "/session";
         try {
             this.makeRequest("DELETE", path, null, null, authToken);
@@ -122,14 +123,13 @@ public class ServerFacade {
             System.out.println("Error during logout: " + e.getMessage());
         }
 
-        setAuthToken(null);
+//        setAuthToken(null);
     }
 
     // register
     public AuthData register(UserData userData) {
         var path = "/user";
-        var response = makeRequest("POST", path, userData, AuthData.class, null);
-        return response;
+        return makeRequest("POST", path, userData, AuthData.class, null);
     }
 
     // makeRequest
@@ -163,18 +163,26 @@ public class ServerFacade {
         if (request != null) {
             http.addRequestProperty("Content-Type", "application/json");
             String reqData = new Gson().toJson(request);
-
-
-            try {
-                OutputStream reqBody = http.getOutputStream();
+            try (OutputStream reqBody = http.getOutputStream()) {
                 reqBody.write(reqData.getBytes());
                 reqBody.close();
-
-            } catch (IOException e) {
-                System.out.println("Error writing req body: " + e.getMessage());
-                throw e;
             }
         }
+//        if (request != null) {
+//            http.addRequestProperty("Content-Type", "application/json");
+//            String reqData = new Gson().toJson(request);
+//
+//
+//            try {
+//                OutputStream reqBody = http.getOutputStream();
+//                reqBody.write(reqData.getBytes());
+//                reqBody.close();
+//
+//            } catch (IOException e) {
+//                System.out.println("Error writing req body: " + e.getMessage());
+//                throw e;
+//            }
+//        }
     }
 
     private void throwIfUnsuccessful(HttpURLConnection http) throws IOException, ResponseException {
@@ -186,7 +194,7 @@ public class ServerFacade {
                 }
             }
 
-            throw new ResponseException(status, "Server error: " + status);
+            throw new ResponseException(status, "other failure: " + status);
         }
     }
 
