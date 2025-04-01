@@ -146,10 +146,12 @@ public class ServerFacade {
                 http.setRequestProperty("authorization", authToken);
             }
 
+
+
             writeBody(req, http);
 
             http.connect();
-//            throwIfUnsuccessful(http);
+            throwIfUnsuccessful(http);
             return readBody(http, responseClass);
         } catch (ResponseException ex) {
             throw ex;

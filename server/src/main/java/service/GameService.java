@@ -10,6 +10,7 @@ import model.ResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class GameService {
     private GameDAO gameDAO;
@@ -64,8 +65,21 @@ public class GameService {
                 throw new IllegalArgumentException("Game not found");
             }
 
+            String whiteUser = game.whiteUsername();
+            String blackUser = game.blackUsername();
+
+            if (Objects.equals(whiteUser, "")) {
+                // change to null for error handling purposes below
+                whiteUser = null;
+            }
+
+            if (Objects.equals(blackUser, "")) {
+                // change to null for error handling purposes below
+                blackUser = null;
+            }
+
             // check if game is already full (has 2 players)
-            if (game.whiteUsername() != null && game.blackUsername() != null) {
+            if (whiteUser != null && blackUser != null) {
                 throw new IllegalArgumentException("Game already has two players");
             }
 
@@ -77,10 +91,10 @@ public class GameService {
             ChessGame.TeamColor reqColor = joinRequest.playerColor();
 
             // verify requested color is available
-            if (reqColor == ChessGame.TeamColor.BLACK && game.blackUsername() != null) {
+            if (reqColor == ChessGame.TeamColor.BLACK && blackUser != null) {
                 throw new ResponseException(403, "Player for black team is already taken");
             }
-            if (reqColor == ChessGame.TeamColor.WHITE && game.whiteUsername() != null) {
+            if (reqColor == ChessGame.TeamColor.WHITE && whiteUser != null) {
                 throw new ResponseException(403, "Player for white team is already taken");
             }
 

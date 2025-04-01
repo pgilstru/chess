@@ -164,8 +164,6 @@ public class Server {
                 list = new ArrayList<>();
             }
 
-            System.out.println("list of games: " + list.size());
-
             // summarize list (so response is shorter and easier to read)
             var listSum = list.stream().map(game ->
                 new GameDetails(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName())).toList();
