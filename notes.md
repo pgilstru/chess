@@ -186,6 +186,11 @@ To restart it run `brew services restart mysql`
 
 
 
+## Phase 6 Notes
+- `shared/src/main/java/websocket/` files `UserGameCommand.java` and `ServerMessage.java` are superclasses for websocket message classes
+
+
+
 ## Chess Application Structure
 
 ```
@@ -195,40 +200,42 @@ To restart it run `brew services restart mysql`
 │       ├── ui/
 │       │   ├── ChessClient.java
 │       │   ├── EscapeSequences.java
+│       │   ├── GameplayUI.java
 │       │   ├── PostLoginUI.java
-│       │   └── PreLoginUI.java
+│       │   ├── PreLoginUI.java
+│       │   └── Repl.java
 │       └── Main.java
 ├── server/
 │   └── src/main/java/
-│       ├── dataaccess/
-│       │   ├── memory/
-│       │   │   ├── MemoryAuthDAO.java
-│       │   │   ├── MemoryGameDAO.java
-│       │   │   └── MemoryUserDAO.java
-│       │   ├── sql/
-│       │   │   ├── DatabaseManager.java
-│       │   │   ├── SQLAuthDAO.java
-│       │   │   ├── SQLGameDAO.java
-│       │   │   └── SQLUserDAO.java
-│       │   ├── AuthDAO.java
-│       │   ├── DataAccessException.java
-│       │   ├── GameDAO.java
-│       │   └── UserDAO.java
-│       ├── server/
-│       │   └── Server.java
-│       ├── service/
-│       │   ├── ClearService.java
-│       │   ├── GameService.java
-│       │   ├── UserService.java
-│       │   └── DatabaseUnavailableException.java
-│       ├── Main.java
-│       └── resources/
-│           ├── web/
-│           │   ├── favicon.ico
-│           │   ├── index.css
-│           │   ├── index.html
-│           │   └── index.js
-│           └── db.properties
+│   │   ├── dataaccess/
+│   │   │   ├── memory/
+│   │   │   │   ├── MemoryAuthDAO.java
+│   │   │   │   ├── MemoryGameDAO.java
+│   │   │   │   └── MemoryUserDAO.java
+│   │   │   ├── sql/
+│   │   │   │   ├── DatabaseManager.java
+│   │   │   │   ├── SQLAuthDAO.java
+│   │   │   │   ├── SQLGameDAO.java
+│   │   │   │   └── SQLUserDAO.java
+│   │   │   ├── AuthDAO.java
+│   │   │   ├── DataAccessException.java
+│   │   │   ├── GameDAO.java
+│   │   │   └── UserDAO.java
+│   │   ├── server/
+│   │   │   └── Server.java
+│   │   ├── service/
+│   │   │   ├── ClearService.java
+│   │   │   ├── GameService.java
+│   │   │   ├── UserService.java
+│   │   │   └── DatabaseUnavailableException.java
+│   │   └── Main.java
+│   └── resources/
+│       ├── web/
+│       │   ├── favicon.ico
+│       │   ├── index.css
+│       │   ├── index.html
+│       │   └── index.js
+│       └── db.properties
 └── shared/
     └── src/main/java/
         ├── chess/
@@ -255,8 +262,13 @@ To restart it run `brew services restart mysql`
         │   ├── JoinRequest.java
         │   ├── ResponseException.java
         │   └── UserData.java
-        └── server/
-            └── ServerFacade.java
+        ├── server/
+        │   └── ServerFacade.java
+        └── websocket/
+            ├── commands/
+            │   └── UserGameCommand.java
+            └── messages/
+                └── ServerMessage.java
 ```
 
 # References: 
