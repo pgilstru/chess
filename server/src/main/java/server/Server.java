@@ -36,6 +36,9 @@ public class Server {
             this.userService = new UserService(userDAO, authDAO);
             this.gameService = new GameService(gameDAO, authDAO);
 
+            // add websocket functionality
+            webSocketHandler = new WebSocketHandler();
+
             this.unAuth = HttpURLConnection.HTTP_UNAUTHORIZED;
             this.internalErr = HttpURLConnection.HTTP_INTERNAL_ERROR;
         } catch (DataAccessException ex) {
