@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import dataaccess.*;
 import dataaccess.sql.*;
 import model.*;
+import server.websocket.WebSocketHandler;
 import service.*;
 import spark.*;
 
@@ -19,6 +20,8 @@ public class Server {
     private final AuthDAO authDAO;
     private final UserDAO userDAO;
     private final GameDAO gameDAO;
+
+    private final WebSocketHandler webSocketHandler;
 
     private final int unAuth;
     private final int internalErr;
@@ -50,6 +53,9 @@ public class Server {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        // websocket handler
+        Spark.webSocket("/ws", webSocketHandler);
 
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", this::clearHandler);

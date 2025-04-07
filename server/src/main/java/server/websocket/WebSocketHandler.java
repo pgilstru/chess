@@ -1,6 +1,7 @@
 package server.websocket;
 
 import com.google.gson.Gson;
+import model.ResponseException;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
@@ -31,10 +32,21 @@ public class WebSocketHandler {
         var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         connections.broadcast(gameID, authToken, notification);
     }
-
+// update make move!
     private void makeMove(String authToken, Integer gameID, Session session) throws IOException {
+        // make a specific move in a specific game
+        try {
+            var message = String.format("User joined the game: " + gameID);
+            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            connections.broadcast(gameID, authToken, notification);
+        } catch (Exception ex) {
+            throw new ResponseException(500, ex.getMessage());
+        }
+    }
+
+    private void leave(String authToken, Integer gameID, Session session) throws IOException {
         // connect to a specific game
-        connections.add(authToken, gameID, session);
+        connections.remove(authToken, gameID);
         var message = String.format("User joined the game: " + gameID);
         var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         connections.broadcast(gameID, authToken, notification);
