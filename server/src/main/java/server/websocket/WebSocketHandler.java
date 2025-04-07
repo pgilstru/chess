@@ -18,13 +18,21 @@ public class WebSocketHandler {
         UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
         switch (command.getCommandType()) {
             case CONNECT -> connect(command.getAuthToken(), command.getGameID(), session);
-            case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID());
-            case LEAVE -> leave(command.getAuthToken(), command.getGameID());
-            case RESIGN -> resign(command.getAuthToken(), command.getGameID());
+            case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), session);
+            case LEAVE -> leave(command.getAuthToken(), command.getGameID(), session);
+            case RESIGN -> resign(command.getAuthToken(), command.getGameID(), session);
         }
     }
 
     private void connect(String authToken, Integer gameID, Session session) throws IOException {
+        // connect to a specific game
+        connections.add(authToken, gameID, session);
+        var message = String.format("User joined the game: " + gameID);
+        var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        connections.broadcast(gameID, authToken, notification);
+    }
+
+    private void makeMove(String authToken, Integer gameID, Session session) throws IOException {
         // connect to a specific game
         connections.add(authToken, gameID, session);
         var message = String.format("User joined the game: " + gameID);
