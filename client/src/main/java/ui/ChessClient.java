@@ -4,6 +4,7 @@ import model.AuthData;
 import model.GameData;
 import model.ResponseException;
 import server.ServerFacade;
+import ui.websocket.NotificationHandler;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -12,14 +13,16 @@ public class ChessClient {
 
     private final ServerFacade server;
     private final String serverUrl;
+    private final NotificationHandler notificationHandler;
 
     // stores authData after logging in or registering
     private AuthData sessionAuthData;
 
-    public ChessClient(String serverUrl) {
+    public ChessClient(String serverUrl, NotificationHandler notificationHandler) {
         // initialize connection to the server
         server = new ServerFacade(serverUrl);
         this.serverUrl = serverUrl;
+        this.notificationHandler = notificationHandler;
     }
 
     // way to process user input and send it to applicable ui
@@ -30,7 +33,7 @@ public class ChessClient {
                 return new PreLoginUI(this, server).eval(input);
             } else {
                 // user is not logged in, use PostLoginUI
-                return new PostLoginUI(this, server).eval(input);
+                return new PostLoginUI(this, server, serverUrl, notificationHandler).eval(input);
             }
 
         } catch (ResponseException e) {

@@ -7,6 +7,8 @@ import model.GameData;
 import model.JoinRequest;
 import model.ResponseException;
 import server.ServerFacade;
+import ui.websocket.NotificationHandler;
+import ui.websocket.WebSocketFacade;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,10 +18,15 @@ public class PostLoginUI {
 
     private final ChessClient chessClient;
     private final ServerFacade server;
+    private final String serverUrl;
+    private final NotificationHandler notificationHandler;
+    private WebSocketFacade ws;
 
-    public PostLoginUI(ChessClient chessClient, ServerFacade server) {
+    public PostLoginUI(ChessClient chessClient, ServerFacade server, String serverUrl, NotificationHandler notificationHandler) {
         this.chessClient = chessClient;
         this.server = server;
+        this.serverUrl = serverUrl;
+        this.notificationHandler = notificationHandler;
     }
 
     // process user commands
@@ -137,6 +144,10 @@ public class PostLoginUI {
             ChessGame.TeamColor color = joinRequest.playerColor();
             GameplayUI.drawChessboard(chessBoard, color);
 
+            // websocket functionality
+            ws = new WebSocketFacade(serverUrl, notificationHandler);
+            ws.connectToGame(authToken, gameID);
+
             return String.format("You successfully joined the game! gameID: " + joinRequest.gameID());
         } catch (ResponseException e) {
             throw new RuntimeException("Must provide a valid gameID");
@@ -164,11 +175,24 @@ public class PostLoginUI {
             throw new ResponseException(400, "Expected: <ID>");
         }
 
-        int gameID = Integer.parseInt(params[0]);
+        try {
+            int gameID = Integer.parseInt(params[0]);
 
-        // implement functionality in next phase!
+            GameData game = getGame(gameID);
 
-        return String.format("You are successfully observing the game! gameID: " + gameID);
+            // verify game exists
+            if (game == null) {
+                throw new ResponseException(400, "Must provide a valid gameID");
+            }
+
+            // websocket functionality
+            ws = new WebSocketFacade(serverUrl, notificationHandler);
+            ws.connectToGame(authToken, gameID);
+
+            return String.format("You are successfully observing the game! gameID: " + gameID);
+        } catch (ResponseException e) {
+            throw new RuntimeException("Must provide a valid gameID");
+        }
     }
 
     private GameData getGame(int gameID) throws ResponseException {
