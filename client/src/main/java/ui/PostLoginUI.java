@@ -185,6 +185,20 @@ public class PostLoginUI {
                 throw new ResponseException(400, "Must provide a valid gameID");
             }
 
+            // add user to the specified game
+            AuthData authData = chessClient.getAuthData();
+            String authToken = authData.authToken();
+
+            if (authToken == null) {
+                throw new ResponseException(401, "Must be authenticated to observe a game");
+            }
+
+            // show the chessboard (observers see it from the white player perspective)
+            ChessBoard chessBoard = new ChessBoard();
+            chessBoard.resetBoard();
+            ChessGame.TeamColor color = ChessGame.TeamColor.WHITE;
+            GameplayUI.drawChessboard(chessBoard, color);
+
             // websocket functionality
             ws = new WebSocketFacade(serverUrl, notificationHandler);
             ws.connectToGame(authToken, gameID);
