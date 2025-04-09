@@ -1,10 +1,90 @@
 package ui;
 
 import chess.*;
+import model.ResponseException;
+import ui.websocket.WebSocketFacade;
 
 import java.util.Arrays;
 
 public class GameplayUI {
+
+    private final ChessBoard chessBoard;
+    private final ChessGame.TeamColor playerColor;
+    private final WebSocketFacade ws;
+    private final String authToken;
+    private final int gameID;
+
+    public GameplayUI(ChessBoard chessBoard, ChessGame.TeamColor playerColor, WebSocketFacade ws, String authToken, int gameID) {
+        this.chessBoard = chessBoard;
+        this.playerColor = playerColor;
+        this.ws = ws;
+        this.authToken = authToken;
+        this.gameID = gameID;
+    }
+
+    // process user commands
+    public String eval(String input) {
+        try {
+            var tokens = input.trim().split(" ");
+            if (tokens.length == 0) {
+                // input is empty, call help
+                return help();
+            }
+
+            // standardize the type of input we receive
+            var cmd = tokens[0].toLowerCase();
+            var params = Arrays.copyOfRange(tokens, 1, tokens.length);
+
+            // commands for gameplay
+            return switch (cmd) {
+                case "redraw" -> redraw();
+                case "leave" -> leave();
+                case "move" -> makeMove(params);
+                case "resign" -> resign();
+                case "highlight" -> highlightLegalMoves(params);
+                default -> help();
+            };
+        } catch (ResponseException e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    private String redraw() throws ResponseException{
+        // redraws the chess board
+    }
+
+    private String leave() throws ResponseException{
+        // removes the user from the game
+        // transitions back to PostLoginUI
+    }
+
+    private String makeMove() throws ResponseException{
+        // update board to reflect result of the move
+        // update for all clients involved in game (players and observers)
+    }
+
+    private String resign() throws ResponseException{
+        // prompt user to confirm they want to resign
+        // if they do, user forfeits game and game ends
+    }
+
+    private String highlightLegalMoves() throws ResponseException{
+        // selected piece's current squares and all squares it can legally move to are highlighted
+        // doesn't update for other players
+    }
+
+    private String help() {
+        // display list of available commands the user can use/actions they can take
+        return """
+               Available game commands:
+               redraw - to redraw the current chess game's board
+               leave - to leave the current chess game
+               move <START> <END> - to make a move from start to end (EX: move b2, b4)
+               resign - to resign from, or forfeit, a game
+               highlight <POSITION> - to highlight legal moves the given piece can make
+               help - to get help with possible commands
+               """;
+    }
 
     public static void drawChessboard(ChessBoard chessBoard, ChessGame.TeamColor playerColor) {
         boolean whitePerspective = (playerColor == ChessGame.TeamColor.WHITE); // Fix the perspective flag

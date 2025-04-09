@@ -44,7 +44,7 @@ public class PostLoginUI {
             // parameters to pass in for command methods
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
 
-            // user not authenticated,
+            // user is authenticated, use these commands
             return switch (cmd) {
                 case "logout" -> logout();
                 case "create" -> createGame(params);
