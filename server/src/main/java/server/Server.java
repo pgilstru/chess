@@ -243,6 +243,7 @@ public class Server {
         try {
             // call the appropriate service
             gameService.join(joinRequest, authToken);
+
             res.status(HttpURLConnection.HTTP_OK); // 200 code
 
             // when the service responds convert the response object back to JSON and send it

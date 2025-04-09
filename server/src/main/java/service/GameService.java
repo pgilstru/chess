@@ -134,4 +134,13 @@ public class GameService {
             throw new RuntimeException(e);
         }
     }
+
+    public GameData load(int gameID) {
+        // load the specified game
+        try {
+            return gameDAO.getGame(gameID);
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("couldn't load the game: " + ex.getMessage());
+        }
+    }
 }
