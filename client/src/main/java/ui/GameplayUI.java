@@ -5,6 +5,7 @@ import model.ResponseException;
 import ui.websocket.WebSocketFacade;
 
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class GameplayUI {
 
@@ -51,26 +52,67 @@ public class GameplayUI {
 
     private String redraw() throws ResponseException{
         // redraws the chess board
+        drawChessboard(chessBoard, playerColor);
+        return "Finished redrawing the chessboard!";
     }
 
     private String leave() throws ResponseException{
         // removes the user from the game
         // transitions back to PostLoginUI
+        ws.leaveGame(authToken, gameID);
+        return "You left the game";
     }
 
-    private String makeMove() throws ResponseException{
-        // update board to reflect result of the move
-        // update for all clients involved in game (players and observers)
+    private String makeMove(String... params) throws ResponseException{
+        // verify 2 arguments provided (start position & end position)
+        if (params.length != 2) {
+            throw new ResponseException(400, "Must provide two arguments. Expected: <START> <END>");
+        }
+
+        try {
+            // get the start position
+            ChessPosition start = parseChessPosition(params[0]);
+
+            // get the end position
+            ChessPosition end = parseChessPosition(params[1]);
+
+            // make chessMove object
+            ChessMove move = new ChessMove(start, end, null);
+
+            // update board for all clients involved in the game to reflect the result of the move
+            ws.makeMove(authToken, gameID, move);
+            return "Successfully made the move!";
+        } catch (IllegalArgumentException e) {
+//            throw new RuntimeException("Incorrect format.");
+            return "Error: Incorrect position format";
+        }
     }
 
     private String resign() throws ResponseException{
+        Scanner scanner = new Scanner(System.in);
+
         // prompt user to confirm they want to resign
-        // if they do, user forfeits game and game ends
+        System.out.println("Are you sure you want to forfeit the game? (yes/no)");
+        String answer = scanner.nextLine().toLowerCase();
+
+        // check their response
+        if (answer.equals("yes")) {
+            // user forfeits game and game ends
+            ws.resignGame(authToken, gameID);
+            return "You resigned from the game";
+        } else if (answer.equals("no")) {
+            // user doesn't forfeit game and game continues
+            return "You did not resign from the game";
+        } else {
+            // user didn't answer "yes" or "no"; game continues
+            return "Try again. Must answer either 'yes' or 'no'.";
+        }
     }
 
-    private String highlightLegalMoves() throws ResponseException{
-        // selected piece's current squares and all squares it can legally move to are highlighted
-        // doesn't update for other players
+    private String highlightLegalMoves(String... params) throws ResponseException{
+        // highlight selected piece's current squares and all squares it can legally move to
+        // (doesn't update for other players)
+
     }
 
     private String help() {
@@ -84,6 +126,10 @@ public class GameplayUI {
                highlight <POSITION> - to highlight legal moves the given piece can make
                help - to get help with possible commands
                """;
+    }
+
+    private ChessPosition parseChessPosition(String position) {
+        // converts the given position into a ChessPosition object
     }
 
     public static void drawChessboard(ChessBoard chessBoard, ChessGame.TeamColor playerColor) {

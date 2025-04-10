@@ -285,3 +285,6 @@ https://www.w3schools.com/sql/sql_ref_drop_table.asp
 
 https://www.w3schools.com/sql/sql_ref_keywords.asp
 
+## Phase 6:
+
+https://www.w3schools.com/java/java_user_input.asp

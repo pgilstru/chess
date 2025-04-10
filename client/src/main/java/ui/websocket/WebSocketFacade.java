@@ -1,5 +1,6 @@
 package ui.websocket;
 
+import chess.ChessMove;
 import com.google.gson.Gson;
 import model.ResponseException;
 import websocket.commands.UserGameCommand;
@@ -66,7 +67,7 @@ public class WebSocketFacade extends Endpoint {
         }
     }
 
-    public void makeMove(String authToken, Integer gameID) throws ResponseException {
+    public void makeMove(String authToken, Integer gameID, ChessMove move) throws ResponseException {
         // used to request to make a move in game
         try {
             var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID);
