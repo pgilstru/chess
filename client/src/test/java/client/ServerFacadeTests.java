@@ -151,33 +151,35 @@ public class ServerFacadeTests {
     @Test
     void joinGameSuccess() throws Exception {
         UserData userData = new UserData("player1", "password", "p1@email.com");
-        facade.register(userData);
-        AuthData authData = facade.login(userData);
+        AuthData authData = facade.register(userData);
+//        AuthData authData = facade.login(userData);
         facade.setAuthToken(authData.authToken());
 
-        GameData gameData = new GameData(0, null, null, "game", null);
-        facade.createGame(gameData, facade.getAuthToken());
+        GameData gameData = new GameData(0, null, null, "game", new ChessGame());
+        GameData game = facade.createGame(gameData, facade.getAuthToken());
 
-        JoinRequest joinRequest = new JoinRequest(ChessGame.TeamColor.WHITE, gameData.gameID());
-        facade.joinGame(joinRequest);
+        JoinRequest joinRequest = new JoinRequest(ChessGame.TeamColor.WHITE, game.gameID());
+        facade.joinGame(joinRequest, authData.authToken());
 
         List<GameData> games = facade.listGames();
         Assertions.assertNotNull(games);
+        Assertions.assertFalse(games.isEmpty());
     }
 
     @Test
     void joinGameFailNotAuthorized() throws Exception {
         // attempt to join a game without logging in (should fail)
+        JoinRequest joinRequest = new JoinRequest(ChessGame.TeamColor.WHITE, 1);
         Assertions.assertThrows(ResponseException.class, () -> {
-            facade.joinGame(new JoinRequest(ChessGame.TeamColor.WHITE, 1));
+            facade.joinGame(joinRequest, "invalid");
         });
     }
 
     @Test
     void logoutSuccess() throws Exception {
         UserData userData = new UserData("player1", "password", "p1@email.com");
-        facade.register(userData);
-        AuthData authData = facade.login(userData);
+        AuthData authData = facade.register(userData);
+//        AuthData authData = facade.login(userData);
         facade.setAuthToken(authData.authToken());
 
         facade.logout(authData.authToken());
@@ -189,7 +191,7 @@ public class ServerFacadeTests {
     void logoutFailNotAuthorized() throws Exception {
         // attempt to log out without logging in (should fail)
         Assertions.assertThrows(ResponseException.class, () -> {
-            facade.logout(null);
+            facade.logout("invalid");
         });
     }
 }

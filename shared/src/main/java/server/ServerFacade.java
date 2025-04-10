@@ -111,19 +111,14 @@ public class ServerFacade {
     }
 
     // logout
-    public void logout(String token) {
-//        if (token == null || token.isEmpty()) {
-//            throw new ResponseException(401, "user not logged in");
-//        }
-        var path = "/session";
-        try {
-            this.makeRequest("DELETE", path, null, null, authToken);
-        } catch (ResponseException e) {
-            // Handle exception if needed
-            System.out.println("Error during logout: " + e.getMessage());
+    public void logout(String token) throws ResponseException {
+        if (token == null || token.isEmpty()) {
+            throw new ResponseException(401, "user not logged in");
         }
+        var path = "/session";
+        this.makeRequest("DELETE", path, null, null, token);
 
-//        setAuthToken(null);
+        setAuthToken(null);
     }
 
     // register
