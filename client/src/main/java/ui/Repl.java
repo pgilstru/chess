@@ -8,7 +8,8 @@ public class Repl {
     private final ChessClient client;
 
     public Repl(String serverUrl) {
-        this.client = new ChessClient(serverUrl);
+        this.client = new ChessClient(serverUrl,
+                notification -> System.out.println("\n" + SET_TEXT_COLOR_GREEN + notification.getMessage() + RESET_TEXT_COLOR));
     }
 
     public void run() {

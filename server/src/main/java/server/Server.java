@@ -18,8 +18,6 @@ public class Server {
     private final UserService userService;
     private final GameService gameService;
     private final AuthDAO authDAO;
-    private final UserDAO userDAO;
-    private final GameDAO gameDAO;
 
     private final WebSocketHandler webSocketHandler;
 
@@ -31,8 +29,8 @@ public class Server {
     public Server() {
         try {
             this.authDAO = new SQLAuthDAO();
-            this.userDAO = new SQLUserDAO();
-            this.gameDAO = new SQLGameDAO();
+            UserDAO userDAO = new SQLUserDAO();
+            GameDAO gameDAO = new SQLGameDAO();
 
             // initialize services
             this.clearService = new ClearService(userDAO, authDAO, gameDAO);
@@ -40,7 +38,7 @@ public class Server {
             this.gameService = new GameService(gameDAO, authDAO);
 
             // add websocket functionality
-            webSocketHandler = new WebSocketHandler();
+            webSocketHandler = new WebSocketHandler(gameService);
 
             this.unAuth = HttpURLConnection.HTTP_UNAUTHORIZED;
             this.internalErr = HttpURLConnection.HTTP_INTERNAL_ERROR;
@@ -227,7 +225,7 @@ public class Server {
         // convert HTTP request into Java usable objects and data
         JoinRequest joinRequest = SERIALIZER.fromJson(req.body(), JoinRequest.class);
 
-        // verify valid gameid and usercolor
+        // verify valid gameID and user color
         if (joinRequest.gameID() <= 0 || joinRequest.playerColor() == null) {
             res.status(HttpURLConnection.HTTP_BAD_REQUEST); // 400 error code
             String message = null;

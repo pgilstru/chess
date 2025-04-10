@@ -1,12 +1,10 @@
 package ui;
 
 import model.AuthData;
-import model.GameData;
 import model.ResponseException;
 import server.ServerFacade;
 import ui.websocket.NotificationHandler;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 public class ChessClient {
