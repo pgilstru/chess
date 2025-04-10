@@ -34,6 +34,15 @@ public class ConnectionManager {
         }
     }
 
+    public void removeConnection(Session session) {
+        for (var conn : connections.values()) {
+            conn.removeIf(c -> c.session.equals(session));
+        }
+
+        // remove the empty game entries
+        connections.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+    }
+
     // will broadcast a message to all clients in a game except specified one (one who makes a move for example)
     public void broadcast(int gameID, String excludeAuthToken, ServerMessage message) throws IOException {
         var gameConnections = connections.get(gameID);
@@ -65,11 +74,11 @@ public class ConnectionManager {
         }
     }
 
-    public void sendMessage(String authToken, ServerMessage message) throws IOException{
+    public void sendMessage(Session session, ServerMessage message) throws IOException{
         // find the connection associated with the authToken
         for (var gameConnections : connections.values()) {
             for (var c : gameConnections) {
-                if (c.authToken.equals(authToken) && c.session.isOpen()) {
+                if (c.session.equals(session) && c.session.isOpen()) {
                     c.send(message.toString());
                     return;
                 }

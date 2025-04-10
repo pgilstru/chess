@@ -25,6 +25,27 @@ public class GameService {
         this.authDAO = authDAO;
     }
 
+    public boolean isGoodAuthToken(String authToken) {
+        try {
+            return authDAO.getAuth(authToken) != null;
+        } catch (DataAccessException e) {
+            return false;
+        }
+    }
+
+    public String getUsername(String authToken) throws ResponseException {
+        try {
+            var authData = authDAO.getAuth(authToken);
+            if (authData == null) {
+                throw new ResponseException(401, "Invalid auth token");
+            }
+
+            return authData.username();
+        } catch (DataAccessException e) {
+            throw new ResponseException(500, "Error when accessing authData");
+        }
+    }
+
     // public CreateResult create(CreateRequest createRequest) {}
     public GameData create(GameData gameData, String authToken) {
         System.out.println("Inserting game with whiteUsername: " + gameData.whiteUsername());
