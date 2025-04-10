@@ -148,14 +148,8 @@ public class GameplayUI {
             }
 
             // print highlighted board (only for player who requested it)
-            boolean playerIsWhite;
-            if (playerColor == ChessGame.TeamColor.BLACK) {
-                // user is black player
-                playerIsWhite = false;
-            } else {
-                // user is white player (or observer)
-                playerIsWhite = true;
-            }
+            boolean playerIsWhite = playerColor != ChessGame.TeamColor.BLACK;
+
             printChessboard(boardCopy, playerIsWhite, chessBoard);
 
             return "Highlighted legal moves in green";

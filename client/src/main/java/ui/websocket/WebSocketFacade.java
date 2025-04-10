@@ -71,12 +71,14 @@ public class WebSocketFacade extends Endpoint {
         // used to request to make a move in game
         try {
             var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID);
+
+            // add the move to the command
+            command.setMove(move);
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());
         }
     }
-
 
     public void resignGame(String authToken, Integer gameID) throws ResponseException {
         // forfeits the match and ends the game so no more moves can be made
