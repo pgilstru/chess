@@ -5,6 +5,7 @@ import model.ResponseException;
 import ui.websocket.WebSocketFacade;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Scanner;
 
 public class GameplayUI {
@@ -77,14 +78,14 @@ public class GameplayUI {
             ChessPosition end = parseChessPosition(params[1]);
 
             // make chessMove object
-            ChessMove move = new ChessMove(start, end, null);
+            ChessMove chessMove = new ChessMove(start, end, null);
 
             // update board for all clients involved in the game to reflect the result of the move
-            ws.makeMove(authToken, gameID, move);
+            ws.makeMove(authToken, gameID, chessMove);
             return "Successfully made the move!";
         } catch (IllegalArgumentException e) {
 //            throw new RuntimeException("Incorrect format.");
-            return "Error: Incorrect position format";
+            return "User Error: Incorrect position format";
         }
     }
 
@@ -109,10 +110,58 @@ public class GameplayUI {
         }
     }
 
-    private String highlightLegalMoves(String... params) throws ResponseException{
-        // highlight selected piece's current squares and all squares it can legally move to
-        // (doesn't update for other players)
+    // highlight selected piece's current squares and all squares it can legally move to
+    private String highlightLegalMoves(String... params) throws ResponseException {
+        // verify 1 argument provided (position)
+        if (params.length != 1) {
+//            throw new ResponseException(400, "Must provide two arguments. Expected: <START> <END>");
+            // return instead of throw error because it isn't really an error, just invalid input
+            return "Expected: <position>";
+        }
 
+        try {
+            ChessPosition position = parseChessPosition(params[0]);
+            ChessPiece piece = chessBoard.getPiece(position);
+
+            // verify there is a piece at the given position
+            if (piece == null) {
+                return "Provided position is null and doesn't have a piece";
+            }
+
+            // find the valid/possible moves to highlight
+            Collection<ChessMove> validMoves = chessBoard.getPiece(position).pieceMoves(chessBoard, position);
+
+            // copy of board to highlight and return to user
+            String[][] boardCopy = new String[8][8];
+            fillOutBoard(chessBoard, boardCopy);
+
+            // highlight given piece
+            int row = position.getRow() - 1;
+            int col = position.getColumn() - 1;
+            boardCopy[row][col] = EscapeSequences.SET_BG_COLOR_YELLOW + boardCopy[row][col] + EscapeSequences.RESET_BG_COLOR;
+
+            // highlight valid moves
+            for (ChessMove move : validMoves) {
+                int endRow = move.getEndPosition().getRow();
+                int endColumn = move.getEndPosition().getColumn();
+                boardCopy[endRow][endColumn] = EscapeSequences.SET_BG_COLOR_GREEN + boardCopy[endRow][endColumn] + EscapeSequences.RESET_BG_COLOR;
+            }
+
+            // print highlighted board (only for player who requested it)
+            boolean playerIsWhite;
+            if (playerColor == ChessGame.TeamColor.BLACK) {
+                // user is black player
+                playerIsWhite = false;
+            } else {
+                // user is white player (or observer)
+                playerIsWhite = true;
+            }
+            printChessboard(boardCopy, playerIsWhite, chessBoard);
+
+            return "Highlighted legal moves in green";
+        } catch (IllegalArgumentException e) {
+            return "User Error: Incorrect position format";
+        }
     }
 
     private String help() {
@@ -128,8 +177,28 @@ public class GameplayUI {
                """;
     }
 
+    // converts the given position into a ChessPosition object
     private ChessPosition parseChessPosition(String position) {
-        // converts the given position into a ChessPosition object
+        // verify position was provided and is two characters (col and row)
+        if (position.length() != 2) {
+            throw new IllegalArgumentException("Position formatted incorrectly");
+        }
+
+        // get the column letter provided (a, b, c, d, e, f, g, h)
+        char col = position.charAt(0);
+
+        // get the row number provided (1, 2, 3, 4, 5, 6, 7, 8)
+        char row = position.charAt(1);
+
+        if (col < 'a' || col > 'h' || row < '1' || row > '8') {
+            throw new IllegalArgumentException("Must provide a valid position");
+        }
+
+        // convert row && column to appropriate numbers
+        int rowNum = row - '0';
+        int colNum = col - 'a' + 1;
+
+        return new ChessPosition(rowNum, colNum); // create new position with row num and col num
     }
 
     public static void drawChessboard(ChessBoard chessBoard, ChessGame.TeamColor playerColor) {

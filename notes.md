@@ -288,3 +288,5 @@ https://www.w3schools.com/sql/sql_ref_keywords.asp
 ## Phase 6:
 
 https://www.w3schools.com/java/java_user_input.asp
+
+https://stackoverflow.com/questions/46343616/how-can-i-convert-a-char-to-int-in-java
