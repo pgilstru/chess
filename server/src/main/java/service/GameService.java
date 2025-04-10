@@ -1,6 +1,8 @@
 package service;
 
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.InvalidMoveException;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
@@ -141,6 +143,145 @@ public class GameService {
             return gameDAO.getGame(gameID);
         } catch (DataAccessException ex) {
             throw new RuntimeException("couldn't load the game: " + ex.getMessage());
+        }
+    }
+
+    public void makeMove(int gameID, ChessMove chessMove, String authToken) {
+        try {
+            // verify user is authorized
+            if (authDAO.getAuth(authToken) == null) {
+                throw new ResponseException(401, "Must be authenticated");
+            }
+
+            // get current game's state and make sure it exists
+            GameData gameData = gameDAO.getGame(gameID);
+            if (gameData == null) {
+                throw new IllegalArgumentException("Game not found");
+            }
+
+            // get the chess game
+            ChessGame chessGame = gameData.game();
+
+            // verify game is not over
+            if (chessGame.isGameOver()) {
+                throw new ResponseException(400, "Game is over");
+            }
+
+            // verify the player can make a move (it's their turn)
+            String username = authDAO.getAuth(authToken).username();
+            ChessGame.TeamColor turn = chessGame.getTeamTurn();
+
+            if ((turn == ChessGame.TeamColor.WHITE && !username.equals(gameData.whiteUsername())) ||
+                    (turn == ChessGame.TeamColor.BLACK && !username.equals(gameData.blackUsername()))) {
+                throw new ResponseException(403, "It isn't your turn yet, move not made");
+            }
+
+            // verify move is actually valid
+            if (!chessGame.validMoves(chessMove.getStartPosition()).contains(chessMove)) {
+                throw new ResponseException(400, "Invalid move");
+            }
+
+            // make the move
+            chessGame.makeMove(chessMove);
+
+            // check if the game should be over
+            if (chessGame.isInCheckmate(ChessGame.TeamColor.WHITE) ||
+                chessGame.isInCheckmate(ChessGame.TeamColor.BLACK) ||
+                chessGame.isInStalemate(ChessGame.TeamColor.WHITE) ||
+                chessGame.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+                chessGame.setGameOver(true);
+            }
+
+            // update game in DB
+            gameDAO.updateGame(gameData);
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Error making move: " + e.getMessage());
+        } catch (InvalidMoveException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void resignGame(int gameID, String authToken) {
+        try {
+            // verify user is authenticated
+            if (authDAO.getAuth(authToken) == null) {
+                throw new ResponseException(401, "Must be authenticated");
+            }
+
+            // get current game's state and make sure it exists
+            GameData gameData = gameDAO.getGame(gameID);
+            if (gameData == null) {
+                throw new IllegalArgumentException("Game not found");
+            }
+
+            // verify player is in the game
+            String username = authDAO.getAuth(authToken).username();
+            if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
+                throw new ResponseException(403, "You aren't a player in this game");
+            }
+
+            // get the chess game
+            ChessGame chessGame = gameData.game();
+
+            // verify game is not over
+            if (chessGame.isGameOver()) {
+                throw new ResponseException(400, "Game is already over");
+            }
+
+            chessGame.setGameOver(true);
+
+            // update game in db
+            gameDAO.updateGame(gameData);
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Error resigning from game: " + e.getMessage());
+        }
+    }
+
+    public boolean isInCheck(int gameID, ChessGame.TeamColor playerColor) {
+        // check if the players team is in check
+        try {
+            GameData gameData = gameDAO.getGame(gameID);
+
+            // verify gameData isn't null/empty
+            if (gameData == null) {
+                throw new IllegalArgumentException("Game not found");
+            }
+
+            return gameData.game().isInCheck(playerColor);
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Error checking game: " + e.getMessage());
+        }
+    }
+
+    public boolean isInCheckmate(int gameID, ChessGame.TeamColor playerColor) {
+        // check if the players team is in checkmate
+        try {
+            GameData gameData = gameDAO.getGame(gameID);
+
+            // verify gameData isn't null/empty
+            if (gameData == null) {
+                throw new IllegalArgumentException("Game not found");
+            }
+
+            return gameData.game().isInCheckmate(playerColor);
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Error checking game: " + e.getMessage());
+        }
+    }
+
+    public boolean isInStalemate(int gameID, ChessGame.TeamColor playerColor) {
+        // check if the players team is in stalemate
+        try {
+            GameData gameData = gameDAO.getGame(gameID);
+
+            // verify gameData isn't null/empty
+            if (gameData == null) {
+                throw new IllegalArgumentException("Game not found");
+            }
+
+            return gameData.game().isInStalemate(playerColor);
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Error checking game: " + e.getMessage());
         }
     }
 }

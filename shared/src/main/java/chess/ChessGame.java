@@ -14,11 +14,13 @@ public class ChessGame {
 
     private ChessBoard board;
     private TeamColor teamTurn;
+    private boolean gameOver;
 
     public ChessGame() {
         this.teamTurn = TeamColor.WHITE; // white is starting team
         this.board = new ChessBoard(); // initialize board
         this.board.resetBoard();
+        this.gameOver = false;
     }
 
     /**
@@ -102,6 +104,11 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        // check if the game is over
+        if (gameOver) {
+            throw new InvalidMoveException("Game is over");
+        }
+
         ChessPiece piece = board.getPiece(move.getStartPosition());
 
         if (piece == null) {
@@ -130,6 +137,52 @@ public class ChessGame {
 
         // switch team turns
         setTeamTurn(teamTurn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
+
+        // after moving, check for any game end conditions
+        checkGameEndConditions();
+    }
+
+    private void checkGameEndConditions() {
+        if (isInCheckmate(TeamColor.WHITE) || isInCheckmate(TeamColor.BLACK) ||
+        isInStalemate(TeamColor.WHITE) || isInStalemate(TeamColor.BLACK)) {
+            // set gameOver to true
+            gameOver = true;
+        }
+    }
+
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public String getGameState() {
+        // gets current game state as a string
+        if (gameOver) {
+            return "Game is over";
+        }
+        if (isInCheckmate(TeamColor.WHITE)) {
+            return "White team is in checkmate";
+        }
+        if (isInCheckmate(TeamColor.BLACK)) {
+            return "Black team is in checkmate";
+        }
+        if (isInStalemate(TeamColor.WHITE)) {
+            return "White team is in stalemate";
+        }
+        if (isInStalemate(TeamColor.BLACK)) {
+            return "Black team is in stalemate";
+        }
+        if (isInCheck(TeamColor.WHITE)) {
+            return "White team is in check";
+        }
+        if (isInCheck(TeamColor.BLACK)) {
+            return "Black team is in check";
+        }
+
+        return "game is in progress";
     }
 
     /**
