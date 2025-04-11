@@ -91,12 +91,14 @@ public class GameService {
             String whiteUser = game.whiteUsername();
             String blackUser = game.blackUsername();
 
-            if (Objects.equals(whiteUser, "")) {
+            if (Objects.equals(whiteUser, "") || Objects.equals(whiteUser, "No white user yet") ||
+                    Objects.equals(whiteUser, "white")) {
                 // change to null for error handling purposes below
                 whiteUser = null;
             }
 
-            if (Objects.equals(blackUser, "")) {
+            if (Objects.equals(blackUser, "") || Objects.equals(blackUser, "No black user yet") ||
+                    Objects.equals(blackUser, "black")) {
                 // change to null for error handling purposes below
                 blackUser = null;
             }

@@ -11,7 +11,6 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import server.Server;
 import service.GameService;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
@@ -26,6 +25,7 @@ public class WebSocketHandler {
 
     private final GameService gameService;
 //    private final Gson serializer = new Gson();
+    private final Gson gson = new Gson();
 
     // constructor for WebSocketHandler
     public WebSocketHandler(GameService gameService) {
@@ -45,13 +45,26 @@ public class WebSocketHandler {
 
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws IOException {
-        UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
-        checkAuth(command.getAuthToken());
-        switch (command.getCommandType()) {
-            case CONNECT -> connect(command.getAuthToken(), command.getGameID(), session);
-            case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), command.getMove(), session);
-            case LEAVE -> leave(command.getAuthToken(), command.getGameID(), session);
-            case RESIGN -> resign(command.getAuthToken(), command.getGameID(), session);
+//        UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
+//        checkAuth(command.getAuthToken());
+//        switch (command.getCommandType()) {
+//            case CONNECT -> connect(command.getAuthToken(), command.getGameID(), session);
+//            case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), command.getMove(), session);
+//            case LEAVE -> leave(command.getAuthToken(), command.getGameID(), session);
+//            case RESIGN -> resign(command.getAuthToken(), command.getGameID(), session);
+//        }
+        UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
+        try {
+            checkAuth(command.getAuthToken());
+            switch (command.getCommandType()) {
+                case CONNECT -> connect(command.getAuthToken(), command.getGameID(), session);
+                case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), command.getMove(), session);
+                case LEAVE -> leave(command.getAuthToken(), command.getGameID(), session);
+                case RESIGN -> resign(command.getAuthToken(), command.getGameID(), session);
+            }
+        } catch (ResponseException ex) {
+            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
+            connections.sendMessage(session, error);
         }
     }
 
@@ -135,7 +148,7 @@ public class WebSocketHandler {
             connections.add(authToken, gameID, session);
 
             // send a notification
-            var message = String.format("User joined the game: " + gameID);
+            String message = String.format("User joined the game: " + gameID);
             var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(gameID, authToken, notification);
 
@@ -143,7 +156,7 @@ public class WebSocketHandler {
             var loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
             connections.sendMessage(session, loadGame);
         } catch (ResponseException ex) {
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
+            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
         }
     }
@@ -167,7 +180,7 @@ public class WebSocketHandler {
             // notify players about the move made
             ChessPosition startPos = chessMove.getStartPosition();
             ChessPosition endPos = chessMove.getEndPosition();
-            var message = String.format("Move made: " + startPos + " to " + endPos);
+            String message = String.format("Move made: " + startPos + " to " + endPos);
             var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(gameID, authToken, notification);
 
@@ -175,12 +188,7 @@ public class WebSocketHandler {
             var load = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
             connections.broadcast(gameID, null, load);
         } catch (ResponseException ex) {
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
-            connections.sendMessage(session, error);
-        } catch (Exception ex) {
-//            throw new ResponseException(500, ex.getMessage());
-            // send error message to player who made invalid move instead of throwing error?
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
+            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
         }
     }
@@ -198,11 +206,11 @@ public class WebSocketHandler {
             connections.remove(authToken, gameID);
 
             // send a notification
-            var message = String.format("User left the game: " + gameID);
+            String message = String.format("User left the game: " + gameID);
             var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(gameID, authToken, notification);
         } catch (ResponseException ex) {
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
+            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
         }
     }
@@ -223,12 +231,12 @@ public class WebSocketHandler {
 
             // notify players about resignation
 //            connections.remove(authToken, gameID);
-            var message = String.format("User resigned from the game: " + gameID);
+            String message = String.format("User resigned from the game: " + gameID);
             var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(gameID, authToken, notification);
         } catch (ResponseException ex) {
 //            throw new RuntimeException(e);
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, ex.getMessage());
+            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
         }
     }

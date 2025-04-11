@@ -64,7 +64,7 @@ public class ServerMessage {
     }
 
     public ServerMessageType getServerMessageType() {
-        return this.serverMessageType;
+        return serverMessageType;
     }
 
     @Override
@@ -87,8 +87,9 @@ public class ServerMessage {
     @Override
     public String toString() {
 //        return super.toString();
-        return "ServerMessage{" + "serverMessageType=" + serverMessageType +
-                ", message='" + message + '\'' + ", errorMessage='" + errorMessage + '\'' +
-                ", game=" + (game != null ? "GameData" : "null") + '}';
+//        return "ServerMessage{" + "serverMessageType=" + serverMessageType +
+//                ", message='" + message + '\'' + ", errorMessage='" + errorMessage + '\'' +
+//                ", game=" + (game != null ? "GameData" : "null") + '}';
+        return new com.google.gson.Gson().toJson(this);
     }
 }
