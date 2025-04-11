@@ -38,8 +38,8 @@ public class WebSocketHandler {
     }
 
     @OnWebSocketClose
-    public void onClose(Session session, String message) {
-        System.out.println("WebSocket connection closed: " + session.getRemoteAddress());
+    public void onClose(Session session, int statusCode, String reason) {
+        System.out.println("WebSocket connection closed: " + session.getRemoteAddress() + " with status " + statusCode);
         connections.removeConnection(session);
     }
 
@@ -148,7 +148,10 @@ public class WebSocketHandler {
             connections.add(authToken, gameID, session);
 
             // send a notification
-            String message = String.format("User joined the game: " + gameID);
+//            String message = String.format("User joined the game: " + gameID);
+            String username = gameService.getUsername(authToken);
+            String message = String.format("User joined the game: " + username);
+
             var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(gameID, authToken, notification);
 

@@ -21,12 +21,27 @@ public class PostLoginUI {
     private final String serverUrl;
     private final NotificationHandler notificationHandler;
     private WebSocketFacade ws;
+    private Integer currGameID;
 
     public PostLoginUI(ChessClient chessClient, ServerFacade server, String serverUrl, NotificationHandler notificationHandler) {
         this.chessClient = chessClient;
         this.server = server;
         this.serverUrl = serverUrl;
         this.notificationHandler = notificationHandler;
+        this.currGameID = null;
+    }
+
+    private void closeExistingWS() throws ResponseException {
+        if (ws != null) {
+            // verify there is a ws to close
+            try {
+                ws.leaveGame(server.getAuthToken(), currGameID);
+                ws = null;
+                currGameID = null;
+            } catch (Exception ex) {
+                throw new ResponseException(500, "Failed to close the websocket connection");
+            }
+        }
     }
 
     // process user commands
@@ -60,6 +75,8 @@ public class PostLoginUI {
     }
 
     private String logout() throws ResponseException{
+        closeExistingWS();
+
         // attempt to log out the user
         String authToken = server.getAuthToken();
         server.logout(authToken);
@@ -127,9 +144,12 @@ public class PostLoginUI {
             GameData game = getGame(gameID);
 
             // verify game exists
-            if (game == null) {
-                throw new ResponseException(400, "Must provide a valid gameID");
-            }
+//            if (game == null) {
+//                throw new ResponseException(400, "Must provide a valid gameID");
+//            }
+
+            // close any existing ws connection
+            closeExistingWS();
 
             JoinRequest joinRequest = getJoinRequest(params, gameID);
 
@@ -145,10 +165,15 @@ public class PostLoginUI {
             GameplayUI.drawChessboard(chessBoard, color);
 
             // websocket functionality
-            ws = new WebSocketFacade(serverUrl, notificationHandler);
-            ws.connectToGame(authToken, gameID);
+            try {
+                ws = new WebSocketFacade(serverUrl, notificationHandler);
+                ws.connectToGame(authToken, gameID);
+                currGameID = gameID;
+            } catch (Exception ex) {
+                throw new ResponseException(500, "failed to establish a ws connection");
+            }
 
-            return String.format("You successfully joined the game! gameID: " + joinRequest.gameID());
+            return String.format("You successfully joined the game! gameID: " + gameID);
         } catch (ResponseException e) {
             throw new RuntimeException("Must provide a valid gameID");
         }
@@ -182,8 +207,10 @@ public class PostLoginUI {
 
             // verify game exists
             if (game == null) {
-                throw new ResponseException(400, "Must provide a valid gameID");
+                throw new ResponseException(400, "Game wasn't found: " + gameID);
             }
+
+            closeExistingWS();
 
             // add user to the specified game
             AuthData authData = chessClient.getAuthData();
@@ -200,23 +227,42 @@ public class PostLoginUI {
             GameplayUI.drawChessboard(chessBoard, color);
 
             // websocket functionality
-            ws = new WebSocketFacade(serverUrl, notificationHandler);
-            ws.connectToGame(authToken, gameID);
+            try {
+                ws = new WebSocketFacade(serverUrl, notificationHandler);
+                ws.connectToGame(authToken, gameID);
+                currGameID = gameID;
+            } catch (Exception ex) {
+                throw new ResponseException(500, "Failed to establish a connection with the websocket");
+            }
 
             return String.format("You are successfully observing the game! gameID: " + gameID);
+        } catch (NumberFormatException e) {
+            throw new ResponseException(400, "GameID must be a valid number");
         } catch (ResponseException e) {
-            throw new RuntimeException("Must provide a valid gameID");
+//            throw new RuntimeException("Must provide a valid gameID");
+            throw e;
         }
     }
 
     private GameData getGame(int gameID) throws ResponseException {
-        for (var game : server.listGames()) {
-            if (game.gameID() == gameID) {
-                return game;
+        try {
+            List<GameData> games = server.listGames();
+            if (games == null || games.isEmpty()) {
+                throw new ResponseException(400, "no games are available");
             }
-        }
 
-        return null;
+            for (var game : games) {
+                if (game.gameID() == gameID) {
+                    return game;
+                }
+            }
+
+            throw new ResponseException(400, "game not found: " + gameID);
+        } catch (ResponseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseException(500, "Error when searching for game: " + e.getMessage());
+        }
     }
 
     private String help() {
