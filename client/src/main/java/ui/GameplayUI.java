@@ -1,15 +1,19 @@
 package ui;
 
-import chess.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Scanner;
+
+import chess.ChessBoard;
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPiece;
+import chess.ChessPosition;
 import model.GameData;
 import model.ResponseException;
 import ui.websocket.NotificationHandler;
 import ui.websocket.WebSocketFacade;
 import websocket.messages.ServerMessage;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Scanner;
 
 public class GameplayUI implements NotificationHandler {
 
@@ -33,36 +37,31 @@ public class GameplayUI implements NotificationHandler {
     public void notify(ServerMessage notification) {
         switch (notification.getServerMessageType()) {
             case LOAD_GAME -> {
-                // update the game's state
-                GameData gameData = notification.getGame();
+                // Update the game state
+                GameData gameData = (GameData) notification.getGame();
                 if (gameData != null && gameData.game() != null) {
                     ChessGame game = gameData.game();
                     chessBoard.resetBoard();
-
-                    // copy all pieces from new game state to board
+                    // Copy all pieces from the new game state to our board
                     for (int row = 1; row <= 8; row++) {
                         for (int col = 1; col <= 8; col++) {
-                            ChessPosition chessPosition = new ChessPosition(row, col);
-                            ChessPiece piece = game.getBoard().getPiece(chessPosition);
-
+                            ChessPosition position = new ChessPosition(row, col);
+                            ChessPiece piece = game.getBoard().getPiece(position);
                             if (piece != null) {
-                                chessBoard.addPiece(chessPosition, piece);
+                                chessBoard.addPiece(position, piece);
                             }
                         }
                     }
-
                     drawChessboard(chessBoard, playerColor);
                 }
             }
             case NOTIFICATION -> {
-                // show the notification
-                var message = notification.getMessage();
-                System.out.println(EscapeSequences.SET_BG_COLOR_DARK_GREEN + message + EscapeSequences.RESET_BG_COLOR);
+                // Display the notification message
+                System.out.println(EscapeSequences.SET_TEXT_COLOR_GREEN + notification.getMessage() + EscapeSequences.RESET_TEXT_COLOR);
             }
             case ERROR -> {
-                // show the error message
-                var message = notification.getErrorMessage();
-                System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + message + EscapeSequences.RESET_BG_COLOR);
+                // Display the error message
+                System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "Error: " + notification.getErrorMessage() + EscapeSequences.RESET_TEXT_COLOR);
             }
         }
     }
@@ -102,10 +101,9 @@ public class GameplayUI implements NotificationHandler {
 
     public String leave() throws ResponseException{
         // removes the user from the game
-        // transitions back to PostLoginUI
         ws.leaveGame(authToken, gameID);
         chessClient.clearGameplayUI();
-        return "You left the game";
+        return "You left the game. Type 'help' to see available commands.";
     }
 
     private String makeMove(String... params) throws ResponseException{
@@ -144,7 +142,8 @@ public class GameplayUI implements NotificationHandler {
         if (answer.equals("yes")) {
             // user forfeits game and game ends
             ws.resignGame(authToken, gameID);
-            return "You resigned from the game";
+            chessClient.clearGameplayUI();
+            return "You resigned from the game. Type 'help' to see available commands.";
         } else if (answer.equals("no")) {
             // user doesn't forfeit game and game continues
             return "You did not resign from the game";
@@ -158,8 +157,6 @@ public class GameplayUI implements NotificationHandler {
     private String highlightLegalMoves(String... params) throws ResponseException {
         // verify 1 argument provided (position)
         if (params.length != 1) {
-//            throw new ResponseException(400, "Must provide two arguments. Expected: <START> <END>");
-            // return instead of throw error because it isn't really an error, just invalid input
             return "Expected: <position>";
         }
 
@@ -169,7 +166,7 @@ public class GameplayUI implements NotificationHandler {
 
             // verify there is a piece at the given position
             if (piece == null) {
-                return "Provided position is null and doesn't have a piece";
+                return "No piece at the given position";
             }
 
             // find the valid/possible moves to highlight
@@ -179,23 +176,24 @@ public class GameplayUI implements NotificationHandler {
             String[][] boardCopy = new String[8][8];
             fillOutBoard(chessBoard, boardCopy);
 
-            // highlight given piece
-//            int row = position.getRow() - 1;
-            int row = 8 - position.getRow();
+            // highlight given piece (adjust for 0-based array indexing)
+            int row = 8 - position.getRow();  // Convert from chess notation to array index
             int col = position.getColumn() - 1;
             boardCopy[row][col] = EscapeSequences.SET_BG_COLOR_YELLOW + boardCopy[row][col] + EscapeSequences.RESET_BG_COLOR;
 
             // highlight valid moves
             for (ChessMove move : validMoves) {
-                int endRow = 8 - move.getEndPosition().getRow();
-                int endColumn = move.getEndPosition().getColumn() - 1;
-                boardCopy[endRow][endColumn] = EscapeSequences.SET_BG_COLOR_GREEN + boardCopy[endRow][endColumn] + EscapeSequences.RESET_BG_COLOR;
+                int endRow = 8 - move.getEndPosition().getRow();  // Convert from chess notation to array index
+                int endCol = move.getEndPosition().getColumn() - 1;
+                boardCopy[endRow][endCol] = EscapeSequences.SET_BG_COLOR_GREEN + boardCopy[endRow][endCol] + EscapeSequences.RESET_BG_COLOR;
             }
 
-            // print highlighted board (only for player who requested it)
-            boolean playerIsWhite = playerColor != ChessGame.TeamColor.BLACK;
+            if (playerColor != ChessGame.TeamColor.WHITE) {
+                boardCopy = flipBoard(boardCopy); // Flip rows only for black's perspective
+            }
 
-            printChessboard(boardCopy, playerIsWhite, chessBoard);
+            // print highlighted board
+            printChessboard(boardCopy, playerColor == ChessGame.TeamColor.WHITE, chessBoard);
 
             return "Highlighted legal moves in green";
         } catch (IllegalArgumentException e) {

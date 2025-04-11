@@ -37,7 +37,7 @@ public class ChessClient {
                 String result = gameplayUI.eval(input);
 
                 // if result shows you left the game, go back to the postLoginUI
-                if (result.contains("left the game") || result.contains("resigned from the game")) {
+                if (result.contains("left the game")) {
                     clearGameplayUI();
                 }
                 return result;

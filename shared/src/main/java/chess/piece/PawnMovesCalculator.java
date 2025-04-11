@@ -61,7 +61,6 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                 if ((targetPiece == null && y == myCol) ||
                         (targetPiece != null && y != myCol && targetPiece.getTeamColor() != pieceColor)) {
                     // if a forward move doesn't have a piece blocking it
-                    System.out.println("possible move: (" + x + ", " + y + ")");
                     if ((pieceColor == ChessGame.TeamColor.WHITE && x == 8) ||
                     (pieceColor == ChessGame.TeamColor.BLACK && x == 1)) {
                         possibleMoves.add(new ChessMove(myPosition, currPos, QUEEN));
@@ -73,7 +72,6 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                         possibleMoves.add(new ChessMove(myPosition, currPos, null));
                     }
                 }
-                System.out.println("not possible move: (" + x + ", " + y + ")");
             }
         }
         return possibleMoves;
