@@ -162,7 +162,7 @@ public class PostLoginUI {
             ChessBoard chessBoard = new ChessBoard();
             chessBoard.resetBoard();
             ChessGame.TeamColor color = joinRequest.playerColor();
-            GameplayUI.drawChessboard(chessBoard, color);
+//            GameplayUI.drawChessboard(chessBoard, color);
 
             // websocket functionality
             try {
@@ -172,6 +172,13 @@ public class PostLoginUI {
             } catch (Exception ex) {
                 throw new ResponseException(500, "failed to establish a ws connection");
             }
+
+            // transition to gameplay
+            GameplayUI gameplayUI = new GameplayUI(chessBoard, color, ws, authToken, gameID, chessClient);
+            chessClient.setGameplayUI(gameplayUI);
+
+            // draw the initial chessboard
+            gameplayUI.redraw();
 
             return String.format("You successfully joined the game! gameID: " + gameID);
         } catch (ResponseException e) {

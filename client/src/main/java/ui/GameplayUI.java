@@ -1,27 +1,70 @@
 package ui;
 
 import chess.*;
+import model.GameData;
 import model.ResponseException;
+import ui.websocket.NotificationHandler;
 import ui.websocket.WebSocketFacade;
+import websocket.messages.ServerMessage;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Scanner;
 
-public class GameplayUI {
+public class GameplayUI implements NotificationHandler {
 
     private final ChessBoard chessBoard;
     private final ChessGame.TeamColor playerColor;
     private final WebSocketFacade ws;
     private final String authToken;
     private final int gameID;
+    private final ChessClient chessClient;
 
-    public GameplayUI(ChessBoard chessBoard, ChessGame.TeamColor playerColor, WebSocketFacade ws, String authToken, int gameID) {
+    public GameplayUI(ChessBoard chessBoard, ChessGame.TeamColor playerColor, WebSocketFacade ws, String authToken, int gameID, ChessClient chessClient) {
         this.chessBoard = chessBoard;
         this.playerColor = playerColor;
         this.ws = ws;
         this.authToken = authToken;
         this.gameID = gameID;
+        this.chessClient = chessClient;
+    }
+
+    @Override
+    public void notify(ServerMessage notification) {
+        switch (notification.getServerMessageType()) {
+            case LOAD_GAME -> {
+                // update the game's state
+                GameData gameData = notification.getGame();
+                if (gameData != null && gameData.game() != null) {
+                    ChessGame game = gameData.game();
+                    chessBoard.resetBoard();
+
+                    // copy all pieces from new game state to board
+                    for (int row = 1; row <= 8; row++) {
+                        for (int col = 1; col <= 8; col++) {
+                            ChessPosition chessPosition = new ChessPosition(row, col);
+                            ChessPiece piece = game.getBoard().getPiece(chessPosition);
+
+                            if (piece != null) {
+                                chessBoard.addPiece(chessPosition, piece);
+                            }
+                        }
+                    }
+
+                    drawChessboard(chessBoard, playerColor);
+                }
+            }
+            case NOTIFICATION -> {
+                // show the notification
+                var message = notification.getMessage();
+                System.out.println(EscapeSequences.SET_BG_COLOR_DARK_GREEN + message + EscapeSequences.RESET_BG_COLOR);
+            }
+            case ERROR -> {
+                // show the error message
+                var message = notification.getErrorMessage();
+                System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + message + EscapeSequences.RESET_BG_COLOR);
+            }
+        }
     }
 
     // process user commands
@@ -51,16 +94,17 @@ public class GameplayUI {
         }
     }
 
-    private String redraw() throws ResponseException{
+    public String redraw() throws ResponseException{
         // redraws the chess board
         drawChessboard(chessBoard, playerColor);
         return "Finished redrawing the chessboard!";
     }
 
-    private String leave() throws ResponseException{
+    public String leave() throws ResponseException{
         // removes the user from the game
         // transitions back to PostLoginUI
         ws.leaveGame(authToken, gameID);
+        chessClient.clearGameplayUI();
         return "You left the game";
     }
 
@@ -136,14 +180,15 @@ public class GameplayUI {
             fillOutBoard(chessBoard, boardCopy);
 
             // highlight given piece
-            int row = position.getRow() - 1;
+//            int row = position.getRow() - 1;
+            int row = 8 - position.getRow();
             int col = position.getColumn() - 1;
             boardCopy[row][col] = EscapeSequences.SET_BG_COLOR_YELLOW + boardCopy[row][col] + EscapeSequences.RESET_BG_COLOR;
 
             // highlight valid moves
             for (ChessMove move : validMoves) {
-                int endRow = move.getEndPosition().getRow();
-                int endColumn = move.getEndPosition().getColumn();
+                int endRow = 8 - move.getEndPosition().getRow();
+                int endColumn = move.getEndPosition().getColumn() - 1;
                 boardCopy[endRow][endColumn] = EscapeSequences.SET_BG_COLOR_GREEN + boardCopy[endRow][endColumn] + EscapeSequences.RESET_BG_COLOR;
             }
 

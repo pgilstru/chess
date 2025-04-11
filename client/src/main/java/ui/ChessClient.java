@@ -14,9 +14,7 @@ public class ChessClient {
     private final ServerFacade server;
     private final String serverUrl;
     private final NotificationHandler notificationHandler;
-    private WebSocketFacade ws;
-
-    private Integer currGameID;
+    private GameplayUI gameplayUI;
 
     // stores authData after logging in or registering
     private AuthData sessionAuthData;
@@ -26,7 +24,7 @@ public class ChessClient {
         server = new ServerFacade(serverUrl);
         this.serverUrl = serverUrl;
         this.notificationHandler = notificationHandler;
-        this.currGameID = null;
+        this.gameplayUI = null;
     }
 
     // way to process user input and send it to applicable ui
@@ -35,6 +33,14 @@ public class ChessClient {
             if (sessionAuthData == null) {
                 // user is logged in, use PreLoginUI
                 return new PreLoginUI(this, server).eval(input);
+            } else if (gameplayUI != null) {
+                String result = gameplayUI.eval(input);
+
+                // if result shows you left the game, go back to the postLoginUI
+                if (result.contains("left the game") || result.contains("resigned from the game")) {
+                    clearGameplayUI();
+                }
+                return result;
             } else {
                 // user is not logged in, use PostLoginUI
                 return new PostLoginUI(this, server, serverUrl, notificationHandler).eval(input);
@@ -55,45 +61,27 @@ public class ChessClient {
         return sessionAuthData;
     }
 
+    public void setGameplayUI(GameplayUI gameplayUI) {
+        this.gameplayUI = gameplayUI;
+    }
+
+    public void clearGameplayUI() {
+        this.gameplayUI = null;
+    }
+
     public void logout() {
-        if (ws != null && currGameID != null) {
+        if (gameplayUI != null) {
             try {
-                ws.leaveGame(sessionAuthData.authToken(), currGameID);
+                gameplayUI.leave();
             } catch (ResponseException e) {
 //                throw new RuntimeException(e);
+                System.out.println("failed to leave the game");
             }
         }
 
         this.sessionAuthData = null;
-        this.currGameID = null;
+        this.gameplayUI = null;
         server.setAuthToken(null);
-    }
-
-    public void connectToGame(int gameID) throws ResponseException {
-        if (ws == null) {
-            ws = new WebSocketFacade(serverUrl, notificationHandler);
-        }
-        this.currGameID = gameID;
-        ws.connectToGame(sessionAuthData.authToken(), gameID);
-    }
-
-    public void leaveGame(int gameID) throws ResponseException {
-        if (ws != null) {
-            ws.leaveGame(sessionAuthData.authToken(), gameID);
-            this.currGameID = null;
-        }
-    }
-
-    public void makeMove(int gameID, ChessMove move) throws ResponseException {
-        if (ws != null) {
-            ws.makeMove(sessionAuthData.authToken(), gameID, move);
-        }
-    }
-
-    public void resignGame(int gameID) throws ResponseException {
-        if (ws != null) {
-            ws. resignGame(sessionAuthData.authToken(), gameID);
-        }
     }
 
     @Override
