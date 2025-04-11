@@ -277,7 +277,7 @@ public class WebSocketFacade extends Endpoint {
 
     public void connectToGame(String authToken, int gameID) throws ResponseException {
         try {
-            URI uri = new URI(serverUrl.replace("http", "ws") + "/connect");
+            URI uri = new URI(serverUrl.replace("http", "ws") + "/ws");
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             ClientEndpointConfig config = ClientEndpointConfig.Builder.create()
                     .configurator(new ClientEndpointConfig.Configurator() {
@@ -288,6 +288,9 @@ public class WebSocketFacade extends Endpoint {
                     })
                     .build();
             container.connectToServer(this, config, uri);
+
+            var command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID);
+            sendMessage(command);
         } catch (DeploymentException | IOException | URISyntaxException ex) {
             throw new ResponseException(500, ex.getMessage());
         }

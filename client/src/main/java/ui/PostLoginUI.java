@@ -181,8 +181,13 @@ public class PostLoginUI {
             gameplayUI.redraw();
 
             return String.format("You successfully joined the game! gameID: " + gameID);
+        } catch (NumberFormatException e) {
+            throw new ResponseException(400, "gameID must be a valid number");
         } catch (ResponseException e) {
-            throw new RuntimeException("Must provide a valid gameID");
+//            throw new RuntimeException("Must provide a valid gameID");
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseException(400, "Error joining game: " + e.getMessage());
         }
     }
 
@@ -230,8 +235,10 @@ public class PostLoginUI {
             // show the chessboard (observers see it from the white player perspective)
             ChessBoard chessBoard = new ChessBoard();
             chessBoard.resetBoard();
-            ChessGame.TeamColor color = ChessGame.TeamColor.WHITE;
-            GameplayUI.drawChessboard(chessBoard, color);
+//            ChessGame.TeamColor color = ChessGame.TeamColor.WHITE;
+//            GameplayUI.drawChessboard(chessBoard, color);
+            // set color to null to show they are an observer not a player
+            ChessGame.TeamColor color = null;
 
             // websocket functionality
             try {
@@ -241,6 +248,13 @@ public class PostLoginUI {
             } catch (Exception ex) {
                 throw new ResponseException(500, "Failed to establish a connection with the websocket");
             }
+
+            // transition to gameplay
+            GameplayUI gameplayUI = new GameplayUI(chessBoard, color, ws, authToken, gameID, chessClient);
+            chessClient.setGameplayUI(gameplayUI);
+
+            // draw the initial chessboard from white perspective
+            gameplayUI.redraw();
 
             return String.format("You are successfully observing the game! gameID: " + gameID);
         } catch (NumberFormatException e) {

@@ -83,14 +83,18 @@ public class GameplayUI implements NotificationHandler {
             return switch (cmd) {
                 case "redraw" -> redraw();
                 case "leave" -> leave();
-                case "move" -> makeMove(params);
-                case "resign" -> resign();
+                case "move" -> isObserver() ? "Observers can't make moves" : makeMove(params);
+                case "resign" -> isObserver() ? "Observers can't resign" : resign();
                 case "highlight" -> highlightLegalMoves(params);
                 default -> help();
             };
         } catch (ResponseException e) {
             return "Error: " + e.getMessage();
         }
+    }
+
+    private boolean isObserver() {
+        return playerColor == null;
     }
 
     public String redraw() throws ResponseException{
@@ -124,6 +128,9 @@ public class GameplayUI implements NotificationHandler {
 
             // update board for all clients involved in the game to reflect the result of the move
             ws.makeMove(authToken, gameID, chessMove);
+
+            // redraw and print the chessboard
+            drawChessboard(chessBoard, playerColor);
             return "Successfully made the move!";
         } catch (IllegalArgumentException e) {
 //            throw new RuntimeException("Incorrect format.");
@@ -188,12 +195,14 @@ public class GameplayUI implements NotificationHandler {
                 boardCopy[endRow][endCol] = EscapeSequences.SET_BG_COLOR_GREEN + boardCopy[endRow][endCol] + EscapeSequences.RESET_BG_COLOR;
             }
 
-            if (playerColor != ChessGame.TeamColor.WHITE) {
+            if (playerColor != ChessGame.TeamColor.WHITE && playerColor != null) {
                 boardCopy = flipBoard(boardCopy); // Flip rows only for black's perspective
             }
 
+            boolean whitePerspective = (playerColor == null || playerColor == ChessGame.TeamColor.WHITE);
+
             // print highlighted board
-            printChessboard(boardCopy, playerColor == ChessGame.TeamColor.WHITE, chessBoard);
+            printChessboard(boardCopy, whitePerspective, chessBoard);
 
             return "Highlighted legal moves in green";
         } catch (IllegalArgumentException e) {
@@ -203,6 +212,16 @@ public class GameplayUI implements NotificationHandler {
 
     private String help() {
         // display list of available commands the user can use/actions they can take
+        if (isObserver()) {
+            // return less commands, only ones observers can do
+            return """
+               Available game commands:
+               redraw - to redraw the current chess game's board
+               leave - to leave the current chess game
+               highlight <POSITION> - to highlight legal moves the given piece can make
+               help - to get help with possible commands
+               """;
+        }
         return """
                Available game commands:
                redraw - to redraw the current chess game's board
@@ -239,7 +258,8 @@ public class GameplayUI implements NotificationHandler {
     }
 
     public static void drawChessboard(ChessBoard chessBoard, ChessGame.TeamColor playerColor) {
-        boolean whitePerspective = (playerColor == ChessGame.TeamColor.WHITE); // Fix the perspective flag
+//        boolean whitePerspective = (playerColor == ChessGame.TeamColor.WHITE); // Fix the perspective flag
+        boolean whitePerspective = (playerColor == null || playerColor == ChessGame.TeamColor.WHITE);
 
         String[][] board = new String[8][8];
         fillOutBoard(chessBoard, board);
@@ -250,7 +270,6 @@ public class GameplayUI implements NotificationHandler {
 
         // Print chessboard based on player's perspective
         printChessboard(board, whitePerspective, chessBoard);
-
     }
 
     private static void printChessboard(String[][] board, boolean whitePerspective, ChessBoard chessBoard) {

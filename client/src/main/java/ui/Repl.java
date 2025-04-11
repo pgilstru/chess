@@ -20,7 +20,7 @@ public class Repl {
 
         while (!result.equals("quit")) {
             // loop until user says they want to quit
-            System.out.print("\n" + SET_TEXT_COLOR_MAGENTA + ">>> " + RESET_TEXT_COLOR);
+            System.out.print("\n" + client.getCmdPromptColor() + RESET_TEXT_COLOR);
             String line = scanner.nextLine();
 
             try {

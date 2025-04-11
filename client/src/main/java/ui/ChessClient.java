@@ -1,5 +1,6 @@
 package ui;
 
+import chess.ChessGame;
 import chess.ChessMove;
 import model.AuthData;
 import model.ResponseException;
@@ -82,6 +83,16 @@ public class ChessClient {
         this.sessionAuthData = null;
         this.gameplayUI = null;
         server.setAuthToken(null);
+    }
+
+    public String getCmdPromptColor() {
+        if (gameplayUI != null) {
+            // use white for the '>>>>' when in a game command prompt
+            return EscapeSequences.SET_TEXT_COLOR_WHITE + ">>>> ";
+        } else {
+            // use blue for post and pre login '>>>'
+            return EscapeSequences.SET_TEXT_COLOR_MAGENTA + ">>> ";
+        }
     }
 
     @Override
