@@ -28,23 +28,23 @@ public abstract class SlidingMovesCalculator implements PieceMovesCalculator {
                 int cY = currPos.getColumn();
 
                 if (cX <= 0 || cX > 8 || cY <= 0 || cY > 8) {
-                    System.out.println("Out of bounds!");
+//                    System.out.println("Out of bounds!");
                     break;
                 }
 
                 ChessPiece targetPiece = board.getPiece(currPos);
 
                 if (targetPiece == null) {
-                    System.out.println("possible move: (" + x + ", " + y + ")");
+//                    System.out.println("possible move: (" + x + ", " + y + ")");
                     possibleMoves.add(new ChessMove(myPosition, currPos, null));
                     continue;
                 }
 
                 if (targetPiece.getTeamColor() != pieceColor) {
-                    System.out.println("possible move (op): (" + x + ", " + y + ")");
+//                    System.out.println("possible move (op): (" + x + ", " + y + ")");
                     possibleMoves.add(new ChessMove(myPosition, currPos, null));
                 }
-                System.out.println("not possible move: (" + x + ", " + y + ")");
+//                System.out.println("not possible move: (" + x + ", " + y + ")");
                 break;
             }
         }

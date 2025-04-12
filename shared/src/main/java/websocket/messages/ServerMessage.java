@@ -42,6 +42,7 @@ public class ServerMessage {
         this.message = null;
         this.errorMessage = null;
         this.game = gameData;
+        System.out.println("Created LOAD_GAME message with game data: " + gameData);
     }
 
     public ServerMessage(ServerMessageType type, String message, String errorMessage, GameData gameData) {

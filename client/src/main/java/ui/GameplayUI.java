@@ -35,24 +35,56 @@ public class GameplayUI implements NotificationHandler {
 
     @Override
     public void notify(ServerMessage notification) {
+        System.out.println("GameplayUI received notification: " + notification.getServerMessageType());
         switch (notification.getServerMessageType()) {
             case LOAD_GAME -> {
                 // Update the game state
-                GameData gameData = (GameData) notification.getGame();
+                System.out.println("Processing load_game message");
+                GameData gameData = notification.getGame();
                 if (gameData != null && gameData.game() != null) {
+                    System.out.println("Updating board with new game state");
                     ChessGame game = gameData.game();
-                    chessBoard.resetBoard();
+
+                    System.out.println("Current game state - team turn: " + game.getTeamTurn());
+                    System.out.println("Player color: " + playerColor);
+//                    chessBoard.resetBoard();
+
+                    // get board from game state
+                    ChessBoard newBoard = game.getBoard();
+                    System.out.println("New board state: " + newBoard.toString());
+                    // create new board (don't reset existing one)
+//                    ChessBoard newBoard = new ChessBoard();
+//                    newBoard.resetBoard();
+
                     // Copy all pieces from the new game state to our board
                     for (int row = 1; row <= 8; row++) {
                         for (int col = 1; col <= 8; col++) {
                             ChessPosition position = new ChessPosition(row, col);
-                            ChessPiece piece = game.getBoard().getPiece(position);
+//                            ChessPiece piece = game.getBoard().getPiece(position);
+                            ChessPiece piece = newBoard.getPiece(position);
+                            if (piece != null) {
+                                newBoard.addPiece(position, piece);
+                            }
+                        }
+                    }
+
+                    // update chessboard
+                    chessBoard.resetBoard();
+                    for (int row = 1; row <= 8; row++) {
+                        for (int col = 1; col <= 8; col++) {
+                            ChessPosition position = new ChessPosition(row, col);
+                            ChessPiece piece = newBoard.getPiece(position);
                             if (piece != null) {
                                 chessBoard.addPiece(position, piece);
                             }
                         }
                     }
+
+                    System.out.println("Drawing updated board:");
                     drawChessboard(chessBoard, playerColor);
+                    System.out.println("Board update complete");
+                } else {
+                    System.out.println("Game data null");
                 }
             }
             case NOTIFICATION -> {
@@ -126,12 +158,26 @@ public class GameplayUI implements NotificationHandler {
             // make chessMove object
             ChessMove chessMove = new ChessMove(start, end, null);
 
+            System.out.println("player color: " + playerColor);
+            System.out.println("current game state: " + chessBoard.toString());
+            System.out.println("Attempting move from " + start + " to " + end);
+
+            ChessPiece piece = chessBoard.getPiece(start);
+            if (piece == null) {
+                return "No piece at the specified position";
+            }
+            System.out.println("Moving piece: " + piece.getPieceType() + " with color " + piece.getTeamColor());
+
+            if (piece.getTeamColor() != playerColor) {
+                return "You can only move your own pieces";
+            }
+
             // update board for all clients involved in the game to reflect the result of the move
             ws.makeMove(authToken, gameID, chessMove);
 
             // redraw and print the chessboard
             drawChessboard(chessBoard, playerColor);
-            return "Successfully made the move!";
+            return "Move sent to server";
         } catch (IllegalArgumentException e) {
 //            throw new RuntimeException("Incorrect format.");
             return "User Error: Incorrect position format";

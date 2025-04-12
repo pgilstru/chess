@@ -136,51 +136,65 @@ public class PostLoginUI {
     private String joinGame(String... params) throws ResponseException {
         // adds user to the game as long as parameters (gameID, playerColor) were provided
         if (params.length != 2) {
-            throw new ResponseException(400, "Expected: <ID> [WHITE|BLACK]");
+//            throw new ResponseException(400, "Expected: <ID> [WHITE|BLACK]");
+            return "Expected: <ID> [WHITE|BLACK]";
         }
 
         try {
             int gameID = Integer.parseInt(params[0]);
-            GameData game = getGame(gameID);
+//            GameData game = getGame(gameID);
+            ChessGame.TeamColor playerColor = ChessGame.TeamColor.valueOf(params[1].toUpperCase());
 
             // verify game exists
 //            if (game == null) {
 //                throw new ResponseException(400, "Must provide a valid gameID");
 //            }
+            System.out.println("\nJoining game:");
+            System.out.println("Game ID: " + gameID);
+            System.out.println("Requested color: " + playerColor);
 
             // close any existing ws connection
-            closeExistingWS();
+//            closeExistingWS();
+            JoinRequest joinRequest = new JoinRequest(playerColor, gameID);
 
-            JoinRequest joinRequest = getJoinRequest(params, gameID);
+//            JoinRequest joinRequest = getJoinRequest(params, gameID);
+            server.joinGame(joinRequest, server.getAuthToken());
+
+            WebSocketFacade ws = new WebSocketFacade(serverUrl, notificationHandler);
+            ws.connectToGame(server.getAuthToken(), gameID);
 
             // add user to the specified game
-            AuthData authData = chessClient.getAuthData();
-            String authToken = authData.authToken();
-            server.joinGame(joinRequest, authToken);
+//            AuthData authData = chessClient.getAuthData();
+//            String authToken = authData.authToken();
+//            server.joinGame(joinRequest, authToken);
+            ChessBoard board = new ChessBoard();
+            board.resetBoard();
+            GameplayUI gameplayUI = new GameplayUI(board, playerColor, ws, server.getAuthToken(), gameID, chessClient);
+            System.out.println("Created gameplayUI with color: " + playerColor);
 
             // show the chessboard
-            ChessBoard chessBoard = new ChessBoard();
-            chessBoard.resetBoard();
-            ChessGame.TeamColor color = joinRequest.playerColor();
-//            GameplayUI.drawChessboard(chessBoard, color);
+//            ChessBoard chessBoard = new ChessBoard();
+//            chessBoard.resetBoard();
+//            ChessGame.TeamColor color = joinRequest.playerColor();
 
             // websocket functionality
-            try {
-                ws = new WebSocketFacade(serverUrl, notificationHandler);
-                ws.connectToGame(authToken, gameID);
-                currGameID = gameID;
-            } catch (Exception ex) {
-                throw new ResponseException(500, "failed to establish a ws connection");
-            }
-
-            // transition to gameplay
-            GameplayUI gameplayUI = new GameplayUI(chessBoard, color, ws, authToken, gameID, chessClient);
+//            try {
+//                ws = new WebSocketFacade(serverUrl, notificationHandler);
+//                ws.connectToGame(authToken, gameID);
+//                currGameID = gameID;
+//            } catch (Exception ex) {
+//                throw new ResponseException(500, "failed to establish a ws connection");
+//            }
+//
+//            // transition to gameplay
+//            GameplayUI gameplayUI = new GameplayUI(chessBoard, color, ws, authToken, gameID, chessClient);
             chessClient.setGameplayUI(gameplayUI);
-
-            // draw the initial chessboard
+//
+//            // draw the initial chessboard
             gameplayUI.redraw();
-
-            return String.format("You successfully joined the game! gameID: " + gameID);
+//
+//            return String.format("You successfully joined the game! gameID: " + gameID);
+            return "Joined game " + gameID + " as " + playerColor;
         } catch (NumberFormatException e) {
             throw new ResponseException(400, "gameID must be a valid number");
         } catch (ResponseException e) {

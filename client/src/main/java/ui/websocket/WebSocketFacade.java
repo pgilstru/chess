@@ -245,20 +245,24 @@
 
 package ui.websocket;
 
-import chess.ChessGame;
 import chess.ChessMove;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import model.ResponseException;
 import model.GameData;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+
 import websocket.commands.UserGameCommand;
 import websocket.commands.UserGameCommand.GameSerializer;
 import websocket.messages.ServerMessage;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+
 import javax.websocket.*;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -278,6 +282,7 @@ public class WebSocketFacade extends Endpoint {
         this.notificationHandler = notificationHandler;
 
         this.gson = new GsonBuilder().registerTypeAdapter(UserGameCommand.class, new GameSerializer())
+                .registerTypeAdapter(ServerMessage.class, new ServerDeserializer())
                 .create();
     }
 
@@ -309,10 +314,25 @@ public class WebSocketFacade extends Endpoint {
 
     @OnMessage
     public void onMessage(Session session, String message) {
-        System.out.println("received ws: " + message);
-//        ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
-        ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
-        notificationHandler.notify(serverMessage);
+//        System.out.println("received ws: " + message);
+//        ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
+//        notificationHandler.notify(serverMessage);
+        System.out.println("Received ws message: " + message);
+        try {
+            ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
+            System.out.println("Parsed message type: " + serverMessage.getServerMessageType());
+            if (serverMessage.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
+                System.out.println("LOAD_GAME message received with game data" + serverMessage.getGame());
+                if (serverMessage.getGame() == null) {
+                    System.out.println("game data is null in LOAD_GAME message!");
+                } else {
+                    System.out.println("Game data contains: " + serverMessage.getGame().toString());
+                }
+            }
+            notificationHandler.notify(serverMessage);
+        } catch (Exception e) {
+            System.out.println("Error processing websocket message: " + e.getMessage());
+        }
     }
 
     @OnClose
@@ -331,8 +351,14 @@ public class WebSocketFacade extends Endpoint {
 
     public void makeMove(String authToken, int gameID, ChessMove move) throws ResponseException {
         try {
+            System.out.println("Creating move command with move: " + move);
+            System.out.println("Start position: " + move.getStartPosition());
+            System.out.println("End position: " + move.getEndPosition());
+
             var command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID);
             command.setMove(move);
+
+            System.out.println("Serialized command: " + gson.toJson(command));
             sendMessage(command);
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());
@@ -357,6 +383,33 @@ public class WebSocketFacade extends Endpoint {
             session.getBasicRemote().sendText(message);
         } else {
             throw new IOException("WebSocket session is not open");
+        }
+    }
+
+    private static class ServerDeserializer implements JsonDeserializer<ServerMessage> {
+        @Override
+        public ServerMessage deserialize(JsonElement json, java.lang.reflect.Type typeOf, JsonDeserializationContext context) {
+            JsonObject jsonObject = json.getAsJsonObject();
+            String type = jsonObject.get("serverMessageType").getAsString();
+            ServerMessage.ServerMessageType messageType = ServerMessage.ServerMessageType.valueOf(type);
+
+            String message = null;
+
+            if (jsonObject.has("message")) {
+                message = jsonObject.get("message").getAsString();
+            }
+
+            String errorMessage = null;
+            if (jsonObject.has("errorMessage")) {
+                errorMessage = jsonObject.get("errorMessage").getAsString();
+            }
+
+            GameData game = null;
+            if (jsonObject.has("game")) {
+                game = context.deserialize(jsonObject.get("game"), GameData.class);
+            }
+
+            return new ServerMessage(messageType, message, errorMessage, game);
         }
     }
 }

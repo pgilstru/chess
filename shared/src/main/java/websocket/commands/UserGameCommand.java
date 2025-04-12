@@ -6,7 +6,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonParseException;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 
 /**
@@ -39,6 +43,7 @@ public class UserGameCommand {
         this.commandType = commandType;
         this.authToken = authToken;
         this.gameID = gameID;
+        this.move = null;
     }
 
     public enum CommandType {
@@ -84,12 +89,14 @@ public class UserGameCommand {
         UserGameCommand that = (UserGameCommand) o;
         return getCommandType() == that.getCommandType() &&
                 Objects.equals(getAuthToken(), that.getAuthToken()) &&
-                Objects.equals(getGameID(), that.getGameID());
+//                Objects.equals(getGameID(), that.getGameID());
+                Objects.equals(getGameID(), that.getGameID()) &&
+                Objects.equals(getMove(), that.getMove());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getCommandType(), getAuthToken(), getGameID());
+        return Objects.hash(getCommandType(), getAuthToken(), getGameID(), getMove());
     }
 
     public static class Move{
@@ -110,9 +117,9 @@ public class UserGameCommand {
         }
     }
 
-    public static class GameSerializer implements JsonSerializer<UserGameCommand> {
+    public static class GameSerializer implements JsonSerializer<UserGameCommand>, JsonDeserializer<UserGameCommand> {
         @Override
-        public JsonElement serialize(UserGameCommand src, java.lang.reflect.Type type, JsonSerializationContext context) {
+        public JsonElement serialize(UserGameCommand src, Type type, JsonSerializationContext context) {
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("commandType", src.getCommandType().name());
             jsonObject.addProperty("authToken", src.getAuthToken());
@@ -129,13 +136,52 @@ public class UserGameCommand {
                 end.addProperty("row", src.getMove().getEndPosition().getRow());
                 end.addProperty("col", src.getMove().getEndPosition().getColumn());
 
-                moveObj.add("start", start);
-                moveObj.add("end", end);
+                moveObj.add("startPosition", start);
+                moveObj.add("endPosition", end);
 
                 jsonObject.add("move", moveObj);
             }
 
             return jsonObject;
+        }
+//
+        @Override
+        public UserGameCommand deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonObject = json.getAsJsonObject();
+            CommandType commandType = CommandType.valueOf(jsonObject.get("commandType").getAsString());
+            String authToken = jsonObject.get("authToken").getAsString();
+            Integer gameID = jsonObject.get("gameID").getAsInt();
+
+            UserGameCommand command = new UserGameCommand(commandType, authToken, gameID);
+
+            if (jsonObject.has("move")) {
+                JsonObject moveObj = jsonObject.getAsJsonObject("move");
+                JsonObject startObj = moveObj.getAsJsonObject("startPosition");
+                JsonObject endObj = moveObj.getAsJsonObject("endPosition");
+
+//                ChessPosition start = new ChessPosition(
+//                        startObj.get("row").getAsInt(),
+//                        startObj.get("col").getAsInt()
+//                );
+//                ChessPosition end = new ChessPosition(
+//                        endObj.get("row").getAsInt(),
+//                        endObj.get("col").getAsInt()
+//                );
+
+                int startRow = startObj.get("row").getAsInt();
+                int startCol = startObj.get("col").getAsInt();
+                int endRow = endObj.get("row").getAsInt();
+                int endCol = endObj.get("col").getAsInt();
+
+                System.out.println("Deserializing move - start: (" + startRow + "," + startCol + "), end: (" + endRow + "," + endCol + ")");
+
+                ChessPosition start = new ChessPosition(startRow, startCol);
+                ChessPosition end = new ChessPosition(endRow, endCol);
+
+                command.setMove(new ChessMove(start, end, null));
+            }
+
+            return command;
         }
     }
 }

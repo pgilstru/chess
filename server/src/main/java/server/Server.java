@@ -246,6 +246,8 @@ public class Server {
 
             // when the service responds convert the response object back to JSON and send it
             return "{}";
+//            GameData updatedGame = gameService.getGame(joinRequest.gameID());
+//            return SERIALIZER.toJson(updatedGame);
         } catch (ResponseException e) {
             // e.g. token is invalid
             int forbidden = HttpURLConnection.HTTP_FORBIDDEN;

@@ -17,16 +17,51 @@ public class ChessGame {
     private boolean gameOver;
 
     public ChessGame() {
+        System.out.println("Initializing new chess game");
         this.teamTurn = TeamColor.WHITE; // white is starting team
         this.board = new ChessBoard(); // initialize board
         this.board.resetBoard();
         this.gameOver = false;
+
+        System.out.println("Game initialized with turn: " + teamTurn);
+        System.out.println("Initial board state: ");
+        printBoard();
+    }
+
+    private void printBoard() {
+        for (int row = 8; row >= 1; row--) {
+            System.out.println(row + " ");
+            for (int col = 1; col <= 8; col++) {
+                ChessPiece piece = board.getPiece(new ChessPosition(row, col));
+                if (piece == null) {
+                    System.out.println("");
+                } else {
+                    char pieceChar = getPieceChar(piece);
+                    System.out.println(pieceChar + " ");
+                }
+            }
+            System.out.println();
+        }
+        System.out.println("  a b c d e f g h");
+    }
+
+    private char getPieceChar(ChessPiece piece) {
+        char baseChar = switch (piece.getPieceType()) {
+            case PAWN -> 'p';
+            case KNIGHT -> 'n';
+            case BISHOP -> 'b';
+            case ROOK -> 'r';
+            case QUEEN -> 'q';
+            case KING -> 'k';
+        };
+        return piece.getTeamColor() == TeamColor.WHITE ? Character.toUpperCase(baseChar) : baseChar;
     }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
+        System.out.println("Getting team turn: " + teamTurn);
         return teamTurn;
     }
 
@@ -36,6 +71,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
+        System.out.println("Setting team turn from " + teamTurn + " to " + team);
         this.teamTurn = team;
     }
 
@@ -55,12 +91,16 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
+        System.out.println("Checking valid moves for position: row=" + startPosition.getColumn() + ", col=" + startPosition.getColumn());
         ChessPiece piece = board.getPiece(startPosition);
 
         // check for piece at startPosition
         if (piece == null) {
+            System.out.println("No piece at start position");
             return null;
         }
+
+        System.out.println("Piece at position: " + piece.getPieceType() + " " + piece.getTeamColor());
 
         // get possible moves and add valid ones (that don't leave king in check)
         Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
@@ -68,6 +108,8 @@ public class ChessGame {
         TeamColor pieceColor = piece.getTeamColor();
 
         for (ChessMove move : possibleMoves) {
+            System.out.println("Checking move: " + move.getStartPosition().getRow() + "," + move.getStartPosition().getColumn() +
+                    " -> " + move.getEndPosition().getRow() + "," + move.getEndPosition().getColumn());
             ChessPiece captured = board.getPiece(move.getEndPosition());
 
             // temporarily apply move to the board
@@ -76,6 +118,9 @@ public class ChessGame {
             if (!isInCheck(pieceColor)) {
                 // king not in check, add it to valid moves
                 validMoves.add(move);
+                System.out.println("move is valid");
+            } else {
+                System.out.println("move would leave king in check");
             }
 
             // undo temporary move aka put board back
@@ -104,12 +149,19 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        System.out.println("\nMaking move:");
+        System.out.println("Current turn: " + teamTurn);
+        System.out.println("Start position: row=" + move.getStartPosition().getRow() + ", col=" + move.getStartPosition().getColumn());
+        System.out.println("End position: row=" + move.getEndPosition().getRow() + ", col=" + move.getEndPosition().getColumn());
+
         // check if the game is over
         if (gameOver) {
             throw new InvalidMoveException("Game is over");
         }
 
         ChessPiece piece = board.getPiece(move.getStartPosition());
+
+        System.out.println("Piece at start position: " + piece.getTeamColor() + ", Current turn=" + getTeamTurn());
 
         if (piece == null) {
             throw new InvalidMoveException("piece is null");
@@ -136,10 +188,15 @@ public class ChessGame {
         tempMoves(move, piece,null, true);
 
         // switch team turns
+        TeamColor oldTurn = teamTurn;
         setTeamTurn(teamTurn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
+        System.out.println("Turn changed from " + oldTurn + " to " + teamTurn);
 
         // after moving, check for any game end conditions
         checkGameEndConditions();
+
+        System.out.println("Board after move: ");
+        printBoard();
     }
 
     private void checkGameEndConditions() {

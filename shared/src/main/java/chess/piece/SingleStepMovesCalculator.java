@@ -25,7 +25,7 @@ public abstract class SingleStepMovesCalculator implements PieceMovesCalculator{
                 ChessPiece targetPiece = board.getPiece(currPos);
 
                 if (targetPiece == null || targetPiece.getTeamColor() != pieceColor) {
-                    System.out.println("possible move: (" + x + ", " + y + ")");
+//                    System.out.println("possible move: (" + x + ", " + y + ")");
                     possibleMoves.add(new ChessMove(myPosition, currPos, null));
                 }
             }

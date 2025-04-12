@@ -4,6 +4,7 @@ import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import model.GameData;
 import model.ResponseException;
 import org.eclipse.jetty.websocket.api.Session;
@@ -25,11 +26,13 @@ public class WebSocketHandler {
 
     private final GameService gameService;
 //    private final Gson serializer = new Gson();
-    private final Gson gson = new Gson();
+    private final Gson gson;
 
     // constructor for WebSocketHandler
     public WebSocketHandler(GameService gameService) {
         this.gameService = gameService;
+        this.gson = new GsonBuilder() .registerTypeAdapter(UserGameCommand.class, new UserGameCommand.GameSerializer())
+                .create();
     }
 
     @OnWebSocketConnect
@@ -53,9 +56,18 @@ public class WebSocketHandler {
 //            case LEAVE -> leave(command.getAuthToken(), command.getGameID(), session);
 //            case RESIGN -> resign(command.getAuthToken(), command.getGameID(), session);
 //        }
+        System.out.println("received websocket message: " + message);
         UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
         try {
             checkAuth(command.getAuthToken());
+            System.out.println("Command type: " + command.getCommandType());
+            if (command.getCommandType() == UserGameCommand.CommandType.MAKE_MOVE) {
+                System.out.println("Move object: " + command.getMove());
+                if (command.getMove() != null) {
+                    System.out.println("start position: " + command.getMove().getStartPosition());
+                    System.out.println("end position: " + command.getMove().getEndPosition());
+                }
+            }
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command.getAuthToken(), command.getGameID(), session);
                 case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), command.getMove(), session);
@@ -70,11 +82,11 @@ public class WebSocketHandler {
 
     private void checkAuth(String authToken) throws ResponseException{
         if (authToken == null || authToken.isEmpty()) {
-            throw new ResponseException(401, "You are unauthorized");
+            throw new ResponseException(401, "Error: You are unauthorized");
         }
 
         if (!gameService.isGoodAuthToken(authToken)) {
-            throw new ResponseException(401, "Provided invalid authToken");
+            throw new ResponseException(401, "Error: Provided invalid authToken");
         }
     }
 
@@ -96,14 +108,25 @@ public class WebSocketHandler {
     }
 
     private void validateMove(ChessMove move, GameData gameData) throws ResponseException {
+        System.out.println("Validating move: " + move);
+        if (move == null) {
+            throw new ResponseException(400, "Move is null");
+        }
+
         ChessPosition start = move.getStartPosition();
+        if (start == null) {
+            throw new ResponseException(400, "start position is null");
+        }
+        System.out.println("Start position: " + start);
         ChessPiece piece = gameData.game().getBoard().getPiece(start);
+        System.out.println("Piece at start position: " + piece);
 
         if (piece == null) {
             throw new ResponseException(400, "No piece at the position");
         }
 
         Collection<ChessMove> validMoves = gameData.game().validMoves(start);
+        System.out.println("valid moves: " + validMoves);
 
         if (!validMoves.contains(move)) {
             throw new ResponseException(400, "Not a valid move");
@@ -136,6 +159,7 @@ public class WebSocketHandler {
 //
 //        // load the game
 //        GameData game = gameService.load(gameID);
+        checkAuth(authToken);
 
         try {
             // verify game exists
@@ -161,21 +185,30 @@ public class WebSocketHandler {
         } catch (ResponseException ex) {
             var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
+            session.close();
         }
     }
 
     private void makeMove(String authToken, Integer gameID, ChessMove chessMove, Session session) throws IOException {
         // make a specific move in a specific game
         try {
+            System.out.println("Processing move request for game " + gameID);
+
             // find the current game
             GameData gameData = gameService.load(gameID);
+            if (gameData == null) {
+                throw new ResponseException(400, "Game not found");
+            }
+            System.out.println("Loaded game data: " + gameData);
 
             // verify the game and move
             validateGameState(gameData, authToken);
             validateMove(chessMove, gameData);
 
             // update the game with the move
-            gameService.makeMove(gameID, chessMove, authToken);
+//            gameService.makeMove(gameID, chessMove, authToken);
+            gameService.makeMove(authToken, gameID, chessMove);
+            System.out.println("Move applied to game");
 
             // check for any game end conditions
             checkGameEnd(gameData);
@@ -185,12 +218,16 @@ public class WebSocketHandler {
             ChessPosition endPos = chessMove.getEndPosition();
             String message = String.format("Move made: " + startPos + " to " + endPos);
             var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            System.out.println("Sending notification: " + message);
             connections.broadcast(gameID, authToken, notification);
 
             // update game state for all players
-            var load = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
-            connections.broadcast(gameID, null, load);
+            gameData = gameService.load(gameID);
+            var loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
+//            System.out.println("Sending LOAD_GAME message with updated game state");
+            connections.broadcast(gameID, null, loadGame);
         } catch (ResponseException ex) {
+            System.out.println("Error processing move: " + ex.getMessage());
             var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
         }
