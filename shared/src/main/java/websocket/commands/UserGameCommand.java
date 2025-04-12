@@ -1,6 +1,11 @@
 package websocket.commands;
 
 import chess.ChessMove;
+import chess.ChessPosition;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import java.util.Objects;
 
@@ -18,7 +23,17 @@ public class UserGameCommand {
 
     private final Integer gameID;
 
-    private ChessMove chessMove;
+    private ChessMove move;
+//    public static class Move{
+//        private final ChessPosition start;
+//        private final ChessPosition end;
+//
+//        public Move(ChessMove move) {
+//            this.start = move.getStartPosition();
+//            this.end = move.getEndPosition();
+//        }
+//    }
+//    private Move move;
 
     public UserGameCommand(CommandType commandType, String authToken, Integer gameID) {
         this.commandType = commandType;
@@ -46,11 +61,16 @@ public class UserGameCommand {
     }
 
     public ChessMove getMove() {
-        return chessMove;
+        return move;
+//        if (move != null) {
+//            return new ChessMove(move.start, move.end, null);
+//        }
+//        return null;
     }
 
-    public void setMove(ChessMove chessMove) {
-        this.chessMove = chessMove;
+    public void setMove(ChessMove move) {
+        this.move = move;
+//        this.move = new Move(move);
     }
 
     @Override
@@ -70,5 +90,52 @@ public class UserGameCommand {
     @Override
     public int hashCode() {
         return Objects.hash(getCommandType(), getAuthToken(), getGameID());
+    }
+
+    public static class Move{
+        private final ChessPosition start;
+        private final ChessPosition end;
+
+        public Move(ChessPosition start, ChessPosition end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        public ChessPosition getStart() {
+            return start;
+        }
+
+        public ChessPosition getEnd() {
+            return end;
+        }
+    }
+
+    public static class GameSerializer implements JsonSerializer<UserGameCommand> {
+        @Override
+        public JsonElement serialize(UserGameCommand src, java.lang.reflect.Type type, JsonSerializationContext context) {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("commandType", src.getCommandType().name());
+            jsonObject.addProperty("authToken", src.getAuthToken());
+            jsonObject.addProperty("gameID", src.getGameID());
+
+            if (src.getMove() != null) {
+                JsonObject moveObj = new JsonObject();
+                JsonObject start = new JsonObject();
+
+                start.addProperty("row", src.getMove().getStartPosition().getRow());
+                start.addProperty("col", src.getMove().getStartPosition().getColumn());
+
+                JsonObject end = new JsonObject();
+                end.addProperty("row", src.getMove().getEndPosition().getRow());
+                end.addProperty("col", src.getMove().getEndPosition().getColumn());
+
+                moveObj.add("start", start);
+                moveObj.add("end", end);
+
+                jsonObject.add("move", moveObj);
+            }
+
+            return jsonObject;
+        }
     }
 }

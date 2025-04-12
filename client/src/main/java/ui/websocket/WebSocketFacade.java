@@ -248,12 +248,14 @@ package ui.websocket;
 import chess.ChessGame;
 import chess.ChessMove;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import model.ResponseException;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import websocket.commands.UserGameCommand;
+import websocket.commands.UserGameCommand.GameSerializer;
 import websocket.messages.ServerMessage;
 
 import javax.websocket.*;
@@ -269,10 +271,14 @@ public class WebSocketFacade extends Endpoint {
     private final String serverUrl;
     private final NotificationHandler notificationHandler;
     private Session session;
+    private final Gson gson;
 
     public WebSocketFacade(String serverUrl, NotificationHandler notificationHandler) {
         this.serverUrl = serverUrl;
         this.notificationHandler = notificationHandler;
+
+        this.gson = new GsonBuilder().registerTypeAdapter(UserGameCommand.class, new GameSerializer())
+                .create();
     }
 
     public void connectToGame(String authToken, int gameID) throws ResponseException {
@@ -296,18 +302,20 @@ public class WebSocketFacade extends Endpoint {
         }
     }
 
-    @OnWebSocketConnect
+    @OnOpen
     public void onOpen(Session session, EndpointConfig config) {
         this.session = session;
     }
 
-    @OnWebSocketMessage
+    @OnMessage
     public void onMessage(Session session, String message) {
-        ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
+        System.out.println("received ws: " + message);
+//        ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
+        ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
         notificationHandler.notify(serverMessage);
     }
 
-    @OnWebSocketClose
+    @OnClose
     public void onClose(Session session, CloseReason closeReason) {
         this.session = null;
     }
@@ -342,7 +350,11 @@ public class WebSocketFacade extends Endpoint {
 
     private void sendMessage(UserGameCommand command) throws IOException {
         if (session != null && session.isOpen()) {
-            session.getBasicRemote().sendText(new Gson().toJson(command));
+//            session.getBasicRemote().sendText(new Gson().toJson(command));
+//            String message = new Gson().toJson(command);
+            String message = gson.toJson(command);
+            System.out.println("Sending ws message: " + message);
+            session.getBasicRemote().sendText(message);
         } else {
             throw new IOException("WebSocket session is not open");
         }

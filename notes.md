@@ -190,14 +190,14 @@ To restart it run `brew services restart mysql`
 - `shared/src/main/java/websocket/` files `UserGameCommand.java` and `ServerMessage.java` are superclasses for websocket message classes
 
 - [x] **Help Text**: Useful help text is displayed informing the user what actions they can take.
-- [ ] **Observer Connect**: Observers can connect to a game. Notification sent and board drawn.
+- [x] **Observer Connect**: Observers can connect to a game. Notification sent and board drawn.
 - [ ] **Observer Leave Game**: Observers can leave games. Notification sent.
 - [ ] **Player Connect**: Players can connect to a game as a specified color. Notification sent and board drawn.
 - [ ] **Player Move Piece**: Players can move pieces. Illegal moves rejected. Notification sent (including check or checkmate notification if applicable) and board drawn.
 - [ ] **Player Leave Game**: Players can leave games. Notification sent.
 - [ ] **Player Resign Game**: Players can resign from games. Notification sent.
 - [ ] **Display Legal Moves**: Any player or observer can display the legal moves available to any piece on the board regardless of whose turn it is.
-- [ ] **Redraw Board**: The board redraws when requested by the user (player or observer).
+- [x] **Redraw Board**: The board redraws when requested by the user (player or observer).
 - [ ] **Game completion**: No moves after game completion due to resignation, checkmate, or stalemate.
 
 
