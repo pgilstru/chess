@@ -170,11 +170,14 @@ public class GameService {
         }
     }
 
-    public GameData load(int gameID) {
+    public GameData load(int gameID) throws ResponseException {
         // load the specified game
         try {
 //            return gameDAO.getGame(gameID);
             GameData gameData = gameDAO.getGame(gameID);
+            if (gameData == null) {
+                throw new ResponseException(400, "Game not found");
+            }
             System.out.println("Loading game " + gameID + ":");
             System.out.println("White username: " + gameData.whiteUsername());
             System.out.println("Black username: " + gameData.blackUsername());
@@ -285,6 +288,7 @@ public class GameService {
             try {
                 gameData.game().makeMove(chessMove);
                 gameDAO.updateGame(gameData);
+                System.out.println("sent the move on!");
             } catch (InvalidMoveException e) {
                 throw new ResponseException(400, e.getMessage());
             }
@@ -327,6 +331,10 @@ public class GameService {
         } catch (DataAccessException e) {
             throw new RuntimeException("Error resigning from game: " + e.getMessage());
         }
+    }
+
+    public boolean gameExists(int gameID) throws DataAccessException {
+        return gameDAO.getGame(gameID) != null;
     }
 
     public boolean isInCheck(int gameID, ChessGame.TeamColor playerColor) {

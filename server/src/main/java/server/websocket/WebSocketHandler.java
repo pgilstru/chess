@@ -5,6 +5,7 @@ import chess.ChessPiece;
 import chess.ChessPosition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import dataaccess.DataAccessException;
 import model.GameData;
 import model.ResponseException;
 import org.eclipse.jetty.websocket.api.Session;
@@ -74,9 +75,10 @@ public class WebSocketHandler {
                 case LEAVE -> leave(command.getAuthToken(), command.getGameID(), session);
                 case RESIGN -> resign(command.getAuthToken(), command.getGameID(), session);
             }
-        } catch (ResponseException ex) {
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
-            connections.sendMessage(session, error);
+        } catch (ResponseException | DataAccessException ex) {
+//            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
+//            connections.sendMessage(session, error);
+            sendError(session, ex.getMessage());
         }
     }
 
@@ -153,13 +155,21 @@ public class WebSocketHandler {
         }
     }
 
-    private void connect(String authToken, Integer gameID, Session session) throws IOException {
+    private void connect(String authToken, Integer gameID, Session session) throws IOException, DataAccessException {
 //        // connect to a specific game
 //        connections.add(authToken, gameID, session);
 //
 //        // load the game
 //        GameData game = gameService.load(gameID);
         checkAuth(authToken);
+
+        if (!gameService.gameExists(gameID)) {
+//            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, "Game doesn't exist", null);
+//            session.getRemote().sendString(gson.toJson(error));
+            String message = "Game doesn't exist";
+            sendError(session, message);
+            return;
+        }
 
         try {
             // verify game exists
@@ -183,8 +193,14 @@ public class WebSocketHandler {
             var loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
             connections.sendMessage(session, loadGame);
         } catch (ResponseException ex) {
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
-            connections.sendMessage(session, error);
+//            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
+//            connections.sendMessage(session, error);
+            sendError(session, ex.getMessage());
+            session.close();
+        } catch (NullPointerException e) {
+//            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, "Game not found", null);
+//            connections.sendMessage(session, error);
+            sendError(session, e.getMessage());
             session.close();
         }
     }
@@ -271,13 +287,23 @@ public class WebSocketHandler {
 
             // notify players about resignation
 //            connections.remove(authToken, gameID);
-            String message = String.format("User resigned from the game: " + gameID);
-            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-            connections.broadcast(gameID, authToken, notification);
+            String message = String.format("User [" + username + "] resigned from the game: " + gameID);
+            ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            connections.broadcastToAll(gameID, notification);
         } catch (ResponseException ex) {
 //            throw new RuntimeException(e);
             var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
+        }
+    }
+
+    private void sendError(Session session, String message) {
+        try {
+            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, message, null);
+            String errorString = gson.toJson(error);
+            session.getRemote().sendString(errorString);
+        } catch (IOException e) {
+            System.out.println("Failed to send error message: " + e.getMessage());
         }
     }
 }

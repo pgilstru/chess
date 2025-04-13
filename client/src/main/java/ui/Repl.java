@@ -1,5 +1,8 @@
 package ui;
 
+import ui.websocket.NotificationHandler;
+import websocket.messages.ServerMessage;
+
 import java.util.Scanner;
 import static ui.EscapeSequences.*;
 
@@ -8,8 +11,20 @@ public class Repl {
     private final ChessClient client;
 
     public Repl(String serverUrl) {
-        this.client = new ChessClient(serverUrl,
-                notification -> System.out.println("\n" + SET_TEXT_COLOR_GREEN + notification.getMessage() + RESET_TEXT_COLOR));
+//        this.client = new ChessClient(serverUrl,
+//                notification -> System.out.println("\n" + SET_TEXT_COLOR_GREEN + notification.getMessage() + RESET_TEXT_COLOR));
+        this.client = new ChessClient(serverUrl, new NotificationHandler() {
+            @Override
+            public void notify(ServerMessage notification) {
+                if (notification.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
+                    System.out.println("\n" + SET_TEXT_COLOR_GREEN + notification.getMessage() + RESET_TEXT_COLOR);
+                }
+
+                if (client.getGameplayUI() != null) {
+                    client.getGameplayUI().notify(notification);
+                }
+            }
+        });
     }
 
     public void run() {

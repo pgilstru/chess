@@ -95,6 +95,10 @@ public class ChessClient {
         }
     }
 
+    public GameplayUI getGameplayUI() {
+        return gameplayUI;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof ChessClient that)) {

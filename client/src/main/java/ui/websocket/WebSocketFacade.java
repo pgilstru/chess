@@ -310,6 +310,7 @@ public class WebSocketFacade extends Endpoint {
     @OnOpen
     public void onOpen(Session session, EndpointConfig config) {
         this.session = session;
+        System.out.println("Websocket connection opened successfully");
     }
 
     @OnMessage
@@ -317,7 +318,7 @@ public class WebSocketFacade extends Endpoint {
 //        System.out.println("received ws: " + message);
 //        ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
 //        notificationHandler.notify(serverMessage);
-        System.out.println("Received ws message: " + message);
+        System.out.println("\nWebSocketFacade received message: " + message);
         try {
             ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
             System.out.println("Parsed message type: " + serverMessage.getServerMessageType());
@@ -327,9 +328,12 @@ public class WebSocketFacade extends Endpoint {
                     System.out.println("game data is null in LOAD_GAME message!");
                 } else {
                     System.out.println("Game data contains: " + serverMessage.getGame().toString());
+                    System.out.println("Game board state: " + serverMessage.getGame());
                 }
             }
+            System.out.println("Passing message to notification handler...");
             notificationHandler.notify(serverMessage);
+            System.out.println("Notification handler completed");
         } catch (Exception e) {
             System.out.println("Error processing websocket message: " + e.getMessage());
         }
@@ -338,6 +342,7 @@ public class WebSocketFacade extends Endpoint {
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
         this.session = null;
+        System.out.println("Websocket connection closed: " + closeReason.getReasonPhrase());
     }
 
     public void leaveGame(String authToken, int gameID) throws ResponseException {
