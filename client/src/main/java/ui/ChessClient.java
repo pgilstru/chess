@@ -1,12 +1,9 @@
 package ui;
 
-import chess.ChessGame;
-import chess.ChessMove;
 import model.AuthData;
 import model.ResponseException;
 import server.ServerFacade;
 import ui.websocket.NotificationHandler;
-import ui.websocket.WebSocketFacade;
 
 import java.util.Objects;
 

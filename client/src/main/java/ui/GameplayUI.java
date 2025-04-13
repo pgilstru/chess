@@ -19,7 +19,7 @@ public class GameplayUI implements NotificationHandler {
 
     private final ChessBoard chessBoard;
     private final ChessGame.TeamColor playerColor;
-    private final WebSocketFacade ws;
+    private WebSocketFacade ws;
     private final String authToken;
     private final int gameID;
     private final ChessClient chessClient;
@@ -39,34 +39,19 @@ public class GameplayUI implements NotificationHandler {
         switch (notification.getServerMessageType()) {
             case LOAD_GAME -> {
                 // Update the game state
-//                System.out.println("Processing load_game message");
+                System.out.println("Processing load_game message");
                 GameData gameData = notification.getGame();
                 if (gameData != null && gameData.game() != null) {
-//                    System.out.println("Updating board with new game state");
                     ChessGame game = gameData.game();
 
 //                    System.out.println("Current game state - team turn: " + game.getTeamTurn());
 //                    System.out.println("Player color: " + playerColor);
-//                    chessBoard.resetBoard();
 
                     // get board from game state
                     ChessBoard newBoard = game.getBoard();
 //                    System.out.println("New board state: " + newBoard.toString());
                     // create new board (don't reset existing one)
 //                    ChessBoard newBoard = new ChessBoard();
-//                    newBoard.resetBoard();
-
-                    // Copy all pieces from the new game state to our board
-//                    for (int row = 1; row <= 8; row++) {
-//                        for (int col = 1; col <= 8; col++) {
-//                            ChessPosition position = new ChessPosition(row, col);
-////                            ChessPiece piece = game.getBoard().getPiece(position);
-//                            ChessPiece piece = newBoard.getPiece(position);
-//                            if (piece != null) {
-//                                newBoard.addPiece(position, piece);
-//                            }
-//                        }
-//                    }
 
                     // update chessboard
                     chessBoard.resetBoard();
@@ -97,6 +82,10 @@ public class GameplayUI implements NotificationHandler {
                 System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "Error: " + notification.getErrorMessage() + EscapeSequences.RESET_TEXT_COLOR);
             }
         }
+    }
+
+    public void setWsFacade(WebSocketFacade ws) {
+        this.ws = ws;
     }
 
     // process user commands
@@ -177,7 +166,7 @@ public class GameplayUI implements NotificationHandler {
             ws.makeMove(authToken, gameID, chessMove);
 
             // redraw and print the chessboard
-//            drawChessboard(chessBoard, playerColor);
+            drawChessboard(chessBoard, playerColor);
             return "Move sent to server";
         } catch (IllegalArgumentException e) {
 //            throw new RuntimeException("Incorrect format.");

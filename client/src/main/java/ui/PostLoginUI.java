@@ -136,65 +136,47 @@ public class PostLoginUI {
     private String joinGame(String... params) throws ResponseException {
         // adds user to the game as long as parameters (gameID, playerColor) were provided
         if (params.length != 2) {
-//            throw new ResponseException(400, "Expected: <ID> [WHITE|BLACK]");
             return "Expected: <ID> [WHITE|BLACK]";
         }
 
         try {
             int gameID = Integer.parseInt(params[0]);
-//            GameData game = getGame(gameID);
             ChessGame.TeamColor playerColor = ChessGame.TeamColor.valueOf(params[1].toUpperCase());
 
-            // verify game exists
-//            if (game == null) {
-//                throw new ResponseException(400, "Must provide a valid gameID");
-//            }
             System.out.println("\nJoining game:");
             System.out.println("Game ID: " + gameID);
             System.out.println("Requested color: " + playerColor);
 
-            // close any existing ws connection
-//            closeExistingWS();
+            // add user to the specified game, sending join req to server
             JoinRequest joinRequest = new JoinRequest(playerColor, gameID);
+            String authToken = server.getAuthToken();
+            server.joinGame(joinRequest, authToken);
 
-//            JoinRequest joinRequest = getJoinRequest(params, gameID);
-            server.joinGame(joinRequest, server.getAuthToken());
+            // for the chessboard
+            ChessBoard chessBoard = new ChessBoard();
+            chessBoard.resetBoard();
 
-            WebSocketFacade ws = new WebSocketFacade(serverUrl, notificationHandler);
-            ws.connectToGame(server.getAuthToken(), gameID);
-
-            // add user to the specified game
-//            AuthData authData = chessClient.getAuthData();
-//            String authToken = authData.authToken();
-//            server.joinGame(joinRequest, authToken);
-            ChessBoard board = new ChessBoard();
-            board.resetBoard();
-            GameplayUI gameplayUI = new GameplayUI(board, playerColor, ws, server.getAuthToken(), gameID, chessClient);
+            // create gameplayUI stuff
+            GameplayUI gameplayUI = new GameplayUI(chessBoard, playerColor, null, server.getAuthToken(), gameID, chessClient);
             System.out.println("Created gameplayUI with color: " + playerColor);
 
-            // show the chessboard
-//            ChessBoard chessBoard = new ChessBoard();
-//            chessBoard.resetBoard();
-//            ChessGame.TeamColor color = joinRequest.playerColor();
+            // create websocket connection w/ gameplayUI as notification handler
+            System.out.println("Creating ws connection");
+            this.ws = new WebSocketFacade(serverUrl, gameplayUI);
+            System.out.println("connecting to game via ws");
+            this.ws.connectToGame(server.getAuthToken(), gameID);
+            System.out.println("ws connection est");
 
-            // websocket functionality
-//            try {
-//                ws = new WebSocketFacade(serverUrl, notificationHandler);
-//                ws.connectToGame(authToken, gameID);
-//                currGameID = gameID;
-//            } catch (Exception ex) {
-//                throw new ResponseException(500, "failed to establish a ws connection");
-//            }
-//
-//            // transition to gameplay
-//            GameplayUI gameplayUI = new GameplayUI(chessBoard, color, ws, authToken, gameID, chessClient);
+            // update gameplay w/ websocket facade
+            gameplayUI.setWsFacade(ws);
+
+            // transition to gameplay and set it in the chessClient
             chessClient.setGameplayUI(gameplayUI);
-//
-//            // draw the initial chessboard
+
+            // draw the initial chessboard
             gameplayUI.redraw();
-//
-//            return String.format("You successfully joined the game! gameID: " + gameID);
-            return "Joined game " + gameID + " as " + playerColor;
+
+            return String.format("You successfully joined the game! gameID: " + gameID);
         } catch (NumberFormatException e) {
             throw new ResponseException(400, "gameID must be a valid number");
         } catch (ResponseException e) {
@@ -203,21 +185,6 @@ public class PostLoginUI {
         } catch (Exception e) {
             throw new ResponseException(400, "Error joining game: " + e.getMessage());
         }
-    }
-
-    private static JoinRequest getJoinRequest(String[] params, int gameID) {
-        ChessGame.TeamColor playerColor;
-        if (Objects.equals(params[1].toLowerCase(), "white")) {
-            // provided color is white
-            playerColor = ChessGame.TeamColor.WHITE;
-        } else if (Objects.equals(params[1].toLowerCase(), "black")) {
-            // provided color is black
-            playerColor = ChessGame.TeamColor.BLACK;
-        } else {
-            throw new ResponseException(400, "Provided color must be either white or black");
-        }
-
-        return new JoinRequest(playerColor, gameID);
     }
 
     private String observeGame(String... params) throws ResponseException {
@@ -249,8 +216,7 @@ public class PostLoginUI {
             // show the chessboard (observers see it from the white player perspective)
             ChessBoard chessBoard = new ChessBoard();
             chessBoard.resetBoard();
-//            ChessGame.TeamColor color = ChessGame.TeamColor.WHITE;
-//            GameplayUI.drawChessboard(chessBoard, color);
+
             // set color to null to show they are an observer not a player
             ChessGame.TeamColor color = null;
 
