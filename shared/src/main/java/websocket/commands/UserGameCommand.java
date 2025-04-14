@@ -28,16 +28,6 @@ public class UserGameCommand {
     private final Integer gameID;
 
     private ChessMove move;
-//    public static class Move{
-//        private final ChessPosition start;
-//        private final ChessPosition end;
-//
-//        public Move(ChessMove move) {
-//            this.start = move.getStartPosition();
-//            this.end = move.getEndPosition();
-//        }
-//    }
-//    private Move move;
 
     public UserGameCommand(CommandType commandType, String authToken, Integer gameID) {
         this.commandType = commandType;
@@ -67,15 +57,10 @@ public class UserGameCommand {
 
     public ChessMove getMove() {
         return move;
-//        if (move != null) {
-//            return new ChessMove(move.start, move.end, null);
-//        }
-//        return null;
     }
 
     public void setMove(ChessMove move) {
         this.move = move;
-//        this.move = new Move(move);
     }
 
     @Override
@@ -89,32 +74,12 @@ public class UserGameCommand {
         UserGameCommand that = (UserGameCommand) o;
         return getCommandType() == that.getCommandType() &&
                 Objects.equals(getAuthToken(), that.getAuthToken()) &&
-//                Objects.equals(getGameID(), that.getGameID());
-                Objects.equals(getGameID(), that.getGameID()) &&
-                Objects.equals(getMove(), that.getMove());
+                Objects.equals(getGameID(), that.getGameID());
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(getCommandType(), getAuthToken(), getGameID(), getMove());
-    }
-
-    public static class Move{
-        private final ChessPosition start;
-        private final ChessPosition end;
-
-        public Move(ChessPosition start, ChessPosition end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        public ChessPosition getStart() {
-            return start;
-        }
-
-        public ChessPosition getEnd() {
-            return end;
-        }
     }
 
     public static class GameSerializer implements JsonSerializer<UserGameCommand>, JsonDeserializer<UserGameCommand> {
@@ -144,7 +109,7 @@ public class UserGameCommand {
 
             return jsonObject;
         }
-//
+
         @Override
         public UserGameCommand deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
             JsonObject jsonObject = json.getAsJsonObject();
@@ -158,15 +123,6 @@ public class UserGameCommand {
                 JsonObject moveObj = jsonObject.getAsJsonObject("move");
                 JsonObject startObj = moveObj.getAsJsonObject("startPosition");
                 JsonObject endObj = moveObj.getAsJsonObject("endPosition");
-
-//                ChessPosition start = new ChessPosition(
-//                        startObj.get("row").getAsInt(),
-//                        startObj.get("col").getAsInt()
-//                );
-//                ChessPosition end = new ChessPosition(
-//                        endObj.get("row").getAsInt(),
-//                        endObj.get("col").getAsInt()
-//                );
 
                 int startRow = startObj.get("row").getAsInt();
                 int startCol = startObj.get("col").getAsInt();

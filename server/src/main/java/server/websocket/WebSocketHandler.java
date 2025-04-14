@@ -48,27 +48,13 @@ public class WebSocketHandler {
     }
 
     @OnWebSocketMessage
-    public void onMessage(Session session, String message) throws IOException {
-//        UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
-//        checkAuth(command.getAuthToken());
-//        switch (command.getCommandType()) {
-//            case CONNECT -> connect(command.getAuthToken(), command.getGameID(), session);
-//            case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), command.getMove(), session);
-//            case LEAVE -> leave(command.getAuthToken(), command.getGameID(), session);
-//            case RESIGN -> resign(command.getAuthToken(), command.getGameID(), session);
-//        }
-        System.out.println("received websocket message: " + message);
-        UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
+    public void onMessage(Session session, String message) throws IOException, DataAccessException {
+        UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
+
         try {
+            // verify user is authenticated
             checkAuth(command.getAuthToken());
-            System.out.println("Command type: " + command.getCommandType());
-            if (command.getCommandType() == UserGameCommand.CommandType.MAKE_MOVE) {
-                System.out.println("Move object: " + command.getMove());
-                if (command.getMove() != null) {
-                    System.out.println("start position: " + command.getMove().getStartPosition());
-                    System.out.println("end position: " + command.getMove().getEndPosition());
-                }
-            }
+
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command.getAuthToken(), command.getGameID(), session);
                 case MAKE_MOVE -> makeMove(command.getAuthToken(), command.getGameID(), command.getMove(), session);
@@ -76,8 +62,6 @@ public class WebSocketHandler {
                 case RESIGN -> resign(command.getAuthToken(), command.getGameID(), session);
             }
         } catch (ResponseException | DataAccessException ex) {
-//            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
-//            connections.sendMessage(session, error);
             sendError(session, ex.getMessage());
         }
     }
@@ -150,29 +134,24 @@ public class WebSocketHandler {
         }
 
         if (message != null) {
-            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(gameData.gameID(), null, notification);
         }
     }
 
     private void connect(String authToken, Integer gameID, Session session) throws IOException, DataAccessException {
-//        // connect to a specific game
-//        connections.add(authToken, gameID, session);
-//
-//        // load the game
-//        GameData game = gameService.load(gameID);
+        // verify user is authenticated
         checkAuth(authToken);
 
+        // verify the game actually exists
         if (!gameService.gameExists(gameID)) {
-//            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, "Game doesn't exist", null);
-//            session.getRemote().sendString(gson.toJson(error));
             String message = "Game doesn't exist";
             sendError(session, message);
             return;
         }
 
         try {
-            // verify game exists
+            // load the game and verify it exists
             GameData gameData = gameService.load(gameID);
             if (gameData == null) {
                 throw new ResponseException(400, "Game wasn't found");
@@ -182,25 +161,18 @@ public class WebSocketHandler {
             connections.add(authToken, gameID, session);
 
             // send a notification
-//            String message = String.format("User joined the game: " + gameID);
             String username = gameService.getUsername(authToken);
-            String message = String.format("User joined the game: " + username);
+            String message = String.format("user joined the game: " + username);
 
-            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            // notify player
+            ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(gameID, authToken, notification);
 
             // send the game state to the new connection
-            var loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
+            ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
             connections.sendMessage(session, loadGame);
-        } catch (ResponseException ex) {
-//            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
-//            connections.sendMessage(session, error);
+        } catch (ResponseException | NullPointerException ex) {
             sendError(session, ex.getMessage());
-            session.close();
-        } catch (NullPointerException e) {
-//            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, "Game not found", null);
-//            connections.sendMessage(session, error);
-            sendError(session, e.getMessage());
             session.close();
         }
     }
@@ -222,7 +194,6 @@ public class WebSocketHandler {
             validateMove(chessMove, gameData);
 
             // update the game with the move
-//            gameService.makeMove(gameID, chessMove, authToken);
             gameService.makeMove(authToken, gameID, chessMove);
             System.out.println("Move applied to game");
 
@@ -233,18 +204,18 @@ public class WebSocketHandler {
             ChessPosition startPos = chessMove.getStartPosition();
             ChessPosition endPos = chessMove.getEndPosition();
             String message = String.format("Move made: " + startPos + " to " + endPos);
-            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             System.out.println("Sending notification: " + message);
             connections.broadcast(gameID, authToken, notification);
 
             // update game state for all players
             gameData = gameService.load(gameID);
-            var loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
+            ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
 //            System.out.println("Sending LOAD_GAME message with updated game state");
             connections.broadcast(gameID, null, loadGame);
         } catch (ResponseException ex) {
             System.out.println("Error processing move: " + ex.getMessage());
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
+            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
         }
     }
@@ -263,10 +234,10 @@ public class WebSocketHandler {
 
             // send a notification
             String message = String.format("User left the game: " + gameID);
-            var notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(gameID, authToken, notification);
         } catch (ResponseException ex) {
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
+            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
         }
     }
@@ -292,14 +263,15 @@ public class WebSocketHandler {
             connections.broadcastToAll(gameID, notification);
         } catch (ResponseException ex) {
 //            throw new RuntimeException(e);
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
+            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, ex.getMessage(), null);
             connections.sendMessage(session, error);
         }
     }
 
     private void sendError(Session session, String message) {
+        // function for sending errors
         try {
-            var error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, message, null);
+            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, message, null);
             String errorString = gson.toJson(error);
             session.getRemote().sendString(errorString);
         } catch (IOException e) {

@@ -87,10 +87,6 @@ public class ServerMessage {
 
     @Override
     public String toString() {
-//        return super.toString();
-//        return "ServerMessage{" + "serverMessageType=" + serverMessageType +
-//                ", message='" + message + '\'' + ", errorMessage='" + errorMessage + '\'' +
-//                ", game=" + (game != null ? "GameData" : "null") + '}';
         return new com.google.gson.Gson().toJson(this);
     }
 }

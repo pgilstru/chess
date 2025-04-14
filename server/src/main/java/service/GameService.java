@@ -1,6 +1,7 @@
 package service;
 
 import chess.ChessGame;
+import chess.ChessGame.TeamColor;
 import chess.ChessMove;
 import chess.InvalidMoveException;
 import dataaccess.AuthDAO;
@@ -15,10 +16,10 @@ import java.util.List;
 import java.util.Objects;
 
 public class GameService {
-    private GameDAO gameDAO;
-    private AuthDAO authDAO;
+    private final GameDAO gameDAO;
+    private final AuthDAO authDAO;
 
-    private int gameIDCounter = 0;
+//    private int gameIDCounter = 0;
 
     public GameService(GameDAO gameDAO, AuthDAO authDAO) {
         this.gameDAO = gameDAO;
@@ -188,105 +189,35 @@ public class GameService {
         }
     }
 
-//    public void makeMove(int gameID, ChessMove chessMove, String authToken) {
-//        try {
-//            // verify user is authorized
-//            if (authDAO.getAuth(authToken) == null) {
-//                throw new ResponseException(401, "Must be authenticated");
-//            }
-//
-//            // get current game's state and make sure it exists
-//            GameData gameData = gameDAO.getGame(gameID);
-//            if (gameData == null) {
-//                throw new IllegalArgumentException("Game not found");
-//            }
-//
-//            System.out.println("\nMaking move in game " + gameID + ":");
-//            System.out.println("Before move - Turn: " + gameData.game().getTeamTurn());
-//            System.out.println("Move: " + chessMove.getStartPosition().getRow() + "," +chessMove.getStartPosition().getColumn() +
-//                    " -> " + chessMove.getEndPosition().getRow() + "," + chessMove.getEndPosition().getColumn());
-//
-//            // get the chess game
-//            ChessGame chessGame = gameData.game();
-//
-//            // verify game is not over
-//            if (chessGame.isGameOver()) {
-//                throw new ResponseException(400, "Game is over");
-//            }
-//
-//            // verify the player can make a move (it's their turn)
-//            String username = authDAO.getAuth(authToken).username();
-//            ChessGame.TeamColor turn = chessGame.getTeamTurn();
-//
-//            System.out.println("Move validation: ");
-//            System.out.println("Current turn: " + turn);
-//            System.out.println("Player username: " + username);
-//            System.out.println("White username: " + gameData.whiteUsername());
-//            System.out.println("Black username: " + gameData.blackUsername());
-//
-//            if ((turn == ChessGame.TeamColor.WHITE && !username.equals(gameData.whiteUsername())) ||
-//                    (turn == ChessGame.TeamColor.BLACK && !username.equals(gameData.blackUsername()))) {
-//                throw new ResponseException(403, "It isn't your turn yet, move not made");
-//            }
-//
-//            // verify move is actually valid
-//            if (!chessGame.validMoves(chessMove.getStartPosition()).contains(chessMove)) {
-//                throw new ResponseException(400, "Invalid move");
-//            }
-//
-//            // make the move
-//            chessGame.makeMove(chessMove);
-//
-//            // check if the game should be over
-//            if (chessGame.isInCheckmate(ChessGame.TeamColor.WHITE) ||
-//                chessGame.isInCheckmate(ChessGame.TeamColor.BLACK) ||
-//                chessGame.isInStalemate(ChessGame.TeamColor.WHITE) ||
-//                chessGame.isInCheckmate(ChessGame.TeamColor.BLACK)) {
-//                chessGame.setGameOver(true);
-//            }
-//
-//            // update game in DB
-//            System.out.println("Updating game in db...");
-//            gameDAO.updateGame(gameData);
-//            System.out.println("After move - turn: " + gameData.game().getTeamTurn());
-//        } catch (DataAccessException e) {
-//            throw new RuntimeException("Error making move: " + e.getMessage());
-//        } catch (InvalidMoveException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
-
     public void makeMove(String authToken, int gameID, ChessMove chessMove) throws ResponseException {
         try {
-            // verify game exists
+            // get current game and make sure it exists
             GameData gameData = gameDAO.getGame(gameID);
             if (gameData == null) {
                 throw new ResponseException(400, "Game not found");
             }
 
+            String whiteUser = gameData.whiteUsername();
+            String blackUser = gameData.blackUsername();
+
             // verify user is in the game
             String username = authDAO.getAuth(authToken).username();
-            if (!gameData.whiteUsername().equals(username) && !gameData.blackUsername().equals(username)) {
-                throw new ResponseException(400, "User not in game");
+            if (!whiteUser.equals(username) && !blackUser.equals(username)) {
+                throw new ResponseException(400, "User isn't in the game");
             }
 
             // verify it's the user's turn
-            ChessGame.TeamColor playerColor = gameData.whiteUsername().equals(username) ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK;
-            System.out.println("\nMove validation:");
-            System.out.println("Username: " + username);
-            System.out.println("Player color: " + playerColor);
-            System.out.println("Current turn: " + gameData.game().getTeamTurn());
-            System.out.println("White username: " + gameData.whiteUsername());
-            System.out.println("Black username: " + gameData.blackUsername());
-            System.out.println("Game state: " + gameData.game().getBoard().toString());
+            TeamColor playerColor = whiteUser.equals(username) ? TeamColor.WHITE : TeamColor.BLACK;
 
             if (gameData.game().getTeamTurn() != playerColor) {
-                throw new ResponseException(400, "It isn't your turn yet");
+                throw new ResponseException(400, "It isn't your turn yet, move not made");
             }
 
-            // make the move
             try {
+                // make the move
                 gameData.game().makeMove(chessMove);
+
+                // update game in the database
                 gameDAO.updateGame(gameData);
                 System.out.println("sent the move on!");
             } catch (InvalidMoveException e) {
@@ -335,53 +266,5 @@ public class GameService {
 
     public boolean gameExists(int gameID) throws DataAccessException {
         return gameDAO.getGame(gameID) != null;
-    }
-
-    public boolean isInCheck(int gameID, ChessGame.TeamColor playerColor) {
-        // check if the players team is in check
-        try {
-            GameData gameData = gameDAO.getGame(gameID);
-
-            // verify gameData isn't null/empty
-            if (gameData == null) {
-                throw new IllegalArgumentException("Game not found");
-            }
-
-            return gameData.game().isInCheck(playerColor);
-        } catch (DataAccessException e) {
-            throw new RuntimeException("Error checking game: " + e.getMessage());
-        }
-    }
-
-    public boolean isInCheckmate(int gameID, ChessGame.TeamColor playerColor) {
-        // check if the players team is in checkmate
-        try {
-            GameData gameData = gameDAO.getGame(gameID);
-
-            // verify gameData isn't null/empty
-            if (gameData == null) {
-                throw new IllegalArgumentException("Game not found");
-            }
-
-            return gameData.game().isInCheckmate(playerColor);
-        } catch (DataAccessException e) {
-            throw new RuntimeException("Error checking game: " + e.getMessage());
-        }
-    }
-
-    public boolean isInStalemate(int gameID, ChessGame.TeamColor playerColor) {
-        // check if the players team is in stalemate
-        try {
-            GameData gameData = gameDAO.getGame(gameID);
-
-            // verify gameData isn't null/empty
-            if (gameData == null) {
-                throw new IllegalArgumentException("Game not found");
-            }
-
-            return gameData.game().isInStalemate(playerColor);
-        } catch (DataAccessException e) {
-            throw new RuntimeException("Error checking game: " + e.getMessage());
-        }
     }
 }
