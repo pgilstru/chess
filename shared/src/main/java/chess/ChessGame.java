@@ -215,33 +215,6 @@ public class ChessGame {
         return gameOver;
     }
 
-    public String getGameState() {
-        // gets current game state as a string
-        if (gameOver) {
-            return "Game is over";
-        }
-        if (isInCheckmate(TeamColor.WHITE)) {
-            return "White team is in checkmate";
-        }
-        if (isInCheckmate(TeamColor.BLACK)) {
-            return "Black team is in checkmate";
-        }
-        if (isInStalemate(TeamColor.WHITE)) {
-            return "White team is in stalemate";
-        }
-        if (isInStalemate(TeamColor.BLACK)) {
-            return "Black team is in stalemate";
-        }
-        if (isInCheck(TeamColor.WHITE)) {
-            return "White team is in check";
-        }
-        if (isInCheck(TeamColor.BLACK)) {
-            return "Black team is in check";
-        }
-
-        return "game is in progress";
-    }
-
     /**
      * Determines if the given team is in check
      *

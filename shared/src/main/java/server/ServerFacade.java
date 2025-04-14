@@ -163,23 +163,11 @@ public class ServerFacade {
             try (OutputStream reqBody = http.getOutputStream()) {
                 reqBody.write(reqData.getBytes());
                 reqBody.close();
+            } catch (IOException e) {
+                System.out.println("Error writing req body: " + e.getMessage());
+                throw e;
             }
         }
-//        if (request != null) {
-//            http.addRequestProperty("Content-Type", "application/json");
-//            String reqData = new Gson().toJson(request);
-//
-//
-//            try {
-//                OutputStream reqBody = http.getOutputStream();
-//                reqBody.write(reqData.getBytes());
-//                reqBody.close();
-//
-//            } catch (IOException e) {
-//                System.out.println("Error writing req body: " + e.getMessage());
-//                throw e;
-//            }
-//        }
     }
 
     private void throwIfUnsuccessful(HttpURLConnection http) throws IOException, ResponseException {

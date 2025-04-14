@@ -10,21 +10,23 @@ public class Repl {
 
     private final ChessClient client;
 
+    // repl constructor
     public Repl(String serverUrl) {
-        this.client = new ChessClient(serverUrl,
-                notification -> System.out.println("\n" + SET_TEXT_COLOR_GREEN + notification.getMessage() + RESET_TEXT_COLOR));
-//        this.client = new ChessClient(serverUrl, new NotificationHandler() {
-//            @Override
-//            public void notify(ServerMessage notification) {
-//                if (notification.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
-//                    System.out.println("\n" + SET_TEXT_COLOR_GREEN + notification.getMessage() + RESET_TEXT_COLOR);
-//                }
-//
-//                if (client.getGameplayUI() != null) {
-//                    client.getGameplayUI().notify(notification);
-//                }
-//            }
-//        });
+        this.client = new ChessClient(serverUrl, new NotificationHandler() {
+            @Override
+            public void notify(ServerMessage notification) {
+                // if a notification message is sent we display it in green
+                if (notification.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
+                    System.out.println("\n" + SET_TEXT_COLOR_GREEN + notification.getMessage() + RESET_TEXT_COLOR);
+                }
+
+                // check if the game is active
+                if (client.getGameplayUI() != null) {
+                    // pass the notification to the game
+                    client.getGameplayUI().notify(notification);
+                }
+            }
+        });
     }
 
     public void run() {

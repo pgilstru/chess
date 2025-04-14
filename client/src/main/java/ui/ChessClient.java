@@ -101,7 +101,8 @@ public class ChessClient {
         if (!(o instanceof ChessClient that)) {
             return false;
         }
-        return Objects.equals(server, that.server) && Objects.equals(serverUrl, that.serverUrl) && Objects.equals(sessionAuthData, that.sessionAuthData);
+        return Objects.equals(server, that.server) && Objects.equals(serverUrl, that.serverUrl)
+                && Objects.equals(sessionAuthData, that.sessionAuthData);
     }
 
     @Override

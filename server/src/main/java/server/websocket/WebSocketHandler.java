@@ -77,14 +77,17 @@ public class WebSocketHandler {
     }
 
     private void validateGameState(GameData gameData, String authToken) throws ResponseException {
+        // verify game was provided
         if (gameData == null) {
             throw new ResponseException(400, "Game not found");
         }
 
+        // verify game isn't over
         if (gameData.game().isGameOver()) {
             throw new ResponseException(400, "Game is over");
         }
 
+        // verify it is the user's turn
         String username = gameService.getUsername(authToken);
         ChessGame.TeamColor turn = gameData.game().getTeamTurn();
         if ((turn == ChessGame.TeamColor.WHITE && !username.equals(gameData.whiteUsername())) ||
@@ -95,6 +98,8 @@ public class WebSocketHandler {
 
     private void validateMove(ChessMove move, GameData gameData) throws ResponseException {
         System.out.println("Validating move: " + move);
+
+        // verify the move was given
         if (move == null) {
             throw new ResponseException(400, "Move is null");
         }
@@ -103,6 +108,7 @@ public class WebSocketHandler {
         if (start == null) {
             throw new ResponseException(400, "start position is null");
         }
+
         System.out.println("Start position: " + start);
         ChessPiece piece = gameData.game().getBoard().getPiece(start);
         System.out.println("Piece at start position: " + piece);
@@ -111,6 +117,7 @@ public class WebSocketHandler {
             throw new ResponseException(400, "No piece at the position");
         }
 
+        // make sure the move is valid for the game in question
         Collection<ChessMove> validMoves = gameData.game().validMoves(start);
         System.out.println("valid moves: " + validMoves);
 
@@ -125,6 +132,7 @@ public class WebSocketHandler {
         ChessGame.TeamColor whiteTeam = ChessGame.TeamColor.WHITE;
         ChessGame.TeamColor blackTeam = ChessGame.TeamColor.BLACK;
 
+        // check if game ended in checkmate or stalemate
         if (chessGame.isInCheckmate(whiteTeam)) {
             message = "White team is in checkmate. Black team wins";
         } else if (chessGame.isInCheckmate(blackTeam)) {

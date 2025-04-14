@@ -24,7 +24,8 @@ public class GameplayUI implements NotificationHandler {
     private final int gameID;
     private final ChessClient chessClient;
 
-    public GameplayUI(ChessBoard chessBoard, ChessGame.TeamColor playerColor, WebSocketFacade ws, String authToken, int gameID, ChessClient chessClient) {
+    public GameplayUI(ChessBoard chessBoard, ChessGame.TeamColor playerColor, WebSocketFacade ws,
+                      String authToken, int gameID, ChessClient chessClient) {
         this.chessBoard = chessBoard;
         this.playerColor = playerColor;
         this.ws = ws;
@@ -41,45 +42,47 @@ public class GameplayUI implements NotificationHandler {
                 // Update the game state
                 System.out.println("Processing load_game message");
                 GameData gameData = notification.getGame();
-                if (gameData != null && gameData.game() != null) {
-                    ChessGame game = gameData.game();
-
-//                    System.out.println("Current game state - team turn: " + game.getTeamTurn());
-//                    System.out.println("Player color: " + playerColor);
-
-                    // get board from game state
-                    ChessBoard newBoard = game.getBoard();
-//                    System.out.println("New board state: " + newBoard.toString());
-                    // create new board (don't reset existing one)
-//                    ChessBoard newBoard = new ChessBoard();
-
-                    // update chessboard
-                    chessBoard.resetBoard();
-                    for (int row = 1; row <= 8; row++) {
-                        for (int col = 1; col <= 8; col++) {
-                            ChessPosition position = new ChessPosition(row, col);
-                            ChessPiece piece = newBoard.getPiece(position);
-                            if (piece != null) {
-                                chessBoard.addPiece(position, piece);
-                            }
-                        }
-                    }
-
-                    System.out.println("Drawing updated board:");
-                    drawChessboard(chessBoard, playerColor);
-
-                    System.out.println("Board update complete");
-                } else {
+                if (gameData == null || gameData.game() == null) {
                     System.out.println("Game data null");
                 }
+                assert gameData != null;
+
+                ChessGame game = gameData.game();
+                assert game != null;
+
+                // create new board from game state (don't reset existing one)
+                ChessBoard newBoard = game.getBoard();
+
+                // update chessboard
+                chessBoard.resetBoard();
+                updateBoard(newBoard);
+
+                System.out.println("Drawing updated board:");
+                drawChessboard(chessBoard, playerColor);
+
+                System.out.println("Board update complete");
             }
             case NOTIFICATION -> {
                 // Display the notification message
-                System.out.println(EscapeSequences.SET_TEXT_COLOR_GREEN + notification.getMessage() + EscapeSequences.RESET_TEXT_COLOR);
+                String msg = notification.getMessage();
+                System.out.println(EscapeSequences.SET_TEXT_COLOR_GREEN + msg + EscapeSequences.RESET_TEXT_COLOR);
             }
             case ERROR -> {
                 // Display the error message
-                System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "Error: " + notification.getErrorMessage() + EscapeSequences.RESET_TEXT_COLOR);
+                String msg = notification.getErrorMessage();
+                System.out.println(EscapeSequences.SET_TEXT_COLOR_RED + "Error: " + msg + EscapeSequences.RESET_TEXT_COLOR);
+            }
+        }
+    }
+
+    private void updateBoard(ChessBoard newBoard) {
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = newBoard.getPiece(position);
+                if (piece != null) {
+                    chessBoard.addPiece(position, piece);
+                }
             }
         }
     }

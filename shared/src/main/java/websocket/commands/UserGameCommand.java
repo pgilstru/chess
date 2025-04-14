@@ -85,25 +85,30 @@ public class UserGameCommand {
     public static class GameSerializer implements JsonSerializer<UserGameCommand>, JsonDeserializer<UserGameCommand> {
         @Override
         public JsonElement serialize(UserGameCommand src, Type type, JsonSerializationContext context) {
+            // serializes a userGameCommand to json
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("commandType", src.getCommandType().name());
             jsonObject.addProperty("authToken", src.getAuthToken());
             jsonObject.addProperty("gameID", src.getGameID());
 
+            // for make move commands
             if (src.getMove() != null) {
                 JsonObject moveObj = new JsonObject();
                 JsonObject start = new JsonObject();
 
+                // serialize start
                 start.addProperty("row", src.getMove().getStartPosition().getRow());
                 start.addProperty("col", src.getMove().getStartPosition().getColumn());
 
                 JsonObject end = new JsonObject();
+                // serialize end
                 end.addProperty("row", src.getMove().getEndPosition().getRow());
                 end.addProperty("col", src.getMove().getEndPosition().getColumn());
 
                 moveObj.add("startPosition", start);
                 moveObj.add("endPosition", end);
 
+                // adds move to the command json
                 jsonObject.add("move", moveObj);
             }
 
@@ -112,6 +117,7 @@ public class UserGameCommand {
 
         @Override
         public UserGameCommand deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+            // deserializes json into a userGameCommand
             JsonObject jsonObject = json.getAsJsonObject();
             CommandType commandType = CommandType.valueOf(jsonObject.get("commandType").getAsString());
             String authToken = jsonObject.get("authToken").getAsString();
@@ -119,6 +125,7 @@ public class UserGameCommand {
 
             UserGameCommand command = new UserGameCommand(commandType, authToken, gameID);
 
+            // check if the command is for making a move
             if (jsonObject.has("move")) {
                 JsonObject moveObj = jsonObject.getAsJsonObject("move");
                 JsonObject startObj = moveObj.getAsJsonObject("startPosition");
@@ -129,8 +136,10 @@ public class UserGameCommand {
                 int endRow = endObj.get("row").getAsInt();
                 int endCol = endObj.get("col").getAsInt();
 
+                // debug stuff
                 System.out.println("Deserializing move - start: (" + startRow + "," + startCol + "), end: (" + endRow + "," + endCol + ")");
 
+                // creates chessMove and adds it to the command
                 ChessPosition start = new ChessPosition(startRow, startCol);
                 ChessPosition end = new ChessPosition(endRow, endCol);
 

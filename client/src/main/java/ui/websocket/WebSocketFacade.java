@@ -119,23 +119,29 @@ public class WebSocketFacade extends Endpoint {
     }
 
     private static class ServerDeserializer implements JsonDeserializer<ServerMessage> {
+        // needed this for some reason, only thing that fixed some things when debugging
         @Override
         public ServerMessage deserialize(JsonElement json, java.lang.reflect.Type typeOf, JsonDeserializationContext context) {
             JsonObject jsonObject = json.getAsJsonObject();
+
+            // get the type of server message
             String type = jsonObject.get("serverMessageType").getAsString();
             ServerMessage.ServerMessageType messageType = ServerMessage.ServerMessageType.valueOf(type);
 
-            String message = null;
+            String message = null; // sets default to null
 
             if (jsonObject.has("message")) {
+                // if there is a message, extract it
                 message = jsonObject.get("message").getAsString();
             }
 
             String errorMessage = null;
             if (jsonObject.has("errorMessage")) {
+                // if there is an error message, extract it
                 errorMessage = jsonObject.get("errorMessage").getAsString();
             }
 
+            // convert nested json into GameData
             GameData game = null;
             if (jsonObject.has("game")) {
                 game = context.deserialize(jsonObject.get("game"), GameData.class);
