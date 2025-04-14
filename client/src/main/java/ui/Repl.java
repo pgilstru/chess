@@ -30,7 +30,7 @@ public class Repl {
     }
 
     public void run() {
-        System.out.println("Welcome to my chess game! Please log in to get started");
+        System.out.println("Welcome to my chess game! Please log in or register to get started");
         Scanner scanner = new Scanner(System.in);
 
         var result = "";
