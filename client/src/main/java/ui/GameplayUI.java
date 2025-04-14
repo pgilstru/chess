@@ -4,11 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Scanner;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessMove;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
 import model.GameData;
 import model.ResponseException;
 import ui.websocket.NotificationHandler;
@@ -92,7 +88,7 @@ public class GameplayUI implements NotificationHandler {
     }
 
     // process user commands
-    public String eval(String input) {
+    public String eval(String input) throws ResponseException {
         try {
             var tokens = input.trim().split(" ");
             if (tokens.length == 0) {
@@ -157,7 +153,8 @@ public class GameplayUI implements NotificationHandler {
 
             ChessPiece piece = chessBoard.getPiece(start);
             if (piece == null) {
-                return "No piece at the specified position";
+//                return "No piece at the specified position";
+                throw new InvalidMoveException("No piece at the specified position");
             }
             System.out.println("Moving piece: " + piece.getPieceType() + " with color " + piece.getTeamColor());
 
@@ -174,6 +171,8 @@ public class GameplayUI implements NotificationHandler {
         } catch (IllegalArgumentException e) {
 //            throw new RuntimeException("Incorrect format.");
             return "User Error: Incorrect position format";
+        } catch (InvalidMoveException e) {
+            throw new RuntimeException(e);
         }
     }
 
