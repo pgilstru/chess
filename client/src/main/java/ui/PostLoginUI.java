@@ -152,23 +152,28 @@ public class PostLoginUI {
             String authToken = server.getAuthToken();
             server.joinGame(joinRequest, authToken);
 
+            WebSocketFacade ws = new WebSocketFacade(serverUrl, notificationHandler);
+            ws.connectToGame(server.getAuthToken(), gameID);
+
             // for the chessboard
             ChessBoard chessBoard = new ChessBoard();
             chessBoard.resetBoard();
 
             // create gameplayUI stuff
-            GameplayUI gameplayUI = new GameplayUI(chessBoard, playerColor, null, server.getAuthToken(), gameID, chessClient);
+//            GameplayUI gameplayUI = new GameplayUI(chessBoard, playerColor, null, server.getAuthToken(), gameID, chessClient);
+            GameplayUI gameplayUI = new GameplayUI(chessBoard, playerColor, ws, server.getAuthToken(), gameID, chessClient);
+
             System.out.println("Created gameplayUI with color: " + playerColor);
 
             // create websocket connection w/ gameplayUI as notification handler
-            System.out.println("Creating ws connection");
-            this.ws = new WebSocketFacade(serverUrl, gameplayUI);
-            System.out.println("connecting to game via ws");
-            this.ws.connectToGame(server.getAuthToken(), gameID);
-            System.out.println("ws connection est");
-
-            // update gameplay w/ websocket facade
-            gameplayUI.setWsFacade(ws);
+//            System.out.println("Creating ws connection");
+//            this.ws = new WebSocketFacade(serverUrl, gameplayUI);
+//            System.out.println("connecting to game via ws");
+//            this.ws.connectToGame(server.getAuthToken(), gameID);
+//            System.out.println("ws connection est");
+//
+//            // update gameplay w/ websocket facade
+//            gameplayUI.setWsFacade(ws);
 
             // transition to gameplay and set it in the chessClient
             chessClient.setGameplayUI(gameplayUI);

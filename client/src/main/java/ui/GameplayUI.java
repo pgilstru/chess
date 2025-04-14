@@ -82,7 +82,7 @@ public class GameplayUI implements NotificationHandler {
             }
         }
     }
-
+//
     public void setWsFacade(WebSocketFacade ws) {
         this.ws = ws;
     }
