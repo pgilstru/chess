@@ -219,7 +219,7 @@ public class WebSocketHandler {
             // update game state for all players
             gameData = gameService.load(gameID);
             ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
-//            System.out.println("Sending LOAD_GAME message with updated game state");
+            System.out.println("Sending LOAD_GAME message with updated game state");
             connections.broadcast(gameID, null, loadGame);
         } catch (ResponseException ex) {
             System.out.println("Error processing move: " + ex.getMessage());

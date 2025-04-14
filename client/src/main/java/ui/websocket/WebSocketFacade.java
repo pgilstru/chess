@@ -30,26 +30,6 @@ public class WebSocketFacade extends Endpoint {
         this.url = url;
         this.notificationHandler = notificationHandler;
 
-        this.gson = new GsonBuilder().registerTypeAdapter(UserGameCommand.class, new GameSerializer())
-                .registerTypeAdapter(ServerMessage.class, new ServerDeserializer()).create();
-    }
-
-    @OnOpen
-    public void onOpen(Session session, EndpointConfig endpointConfig) {
-        this.session = session;
-    }
-
-    @OnMessage
-    public void onMessage(String message) {
-        try {
-            ServerMessage notification = gson.fromJson(message, ServerMessage.class);
-            notificationHandler.notify(notification);
-        } catch (Exception e) {
-            System.out.println("Error processing the ws message: " + e.getMessage());
-        }
-    }
-
-    public void connectToGame(String authToken, Integer gameID) throws ResponseException {
         // user makes a ws connection as a player or observer
         try {
             // change the url to use websocket 'ws'
@@ -60,12 +40,28 @@ public class WebSocketFacade extends Endpoint {
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
-            container.connectToServer(this, uri);
+            this.session = container.connectToServer(this, uri);
 
-            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID);
-            sendMessage(command);
         } catch (IOException | URISyntaxException | DeploymentException ex) {
             throw new ResponseException(500, ex.getMessage());
+        }
+
+        this.gson = new GsonBuilder().registerTypeAdapter(UserGameCommand.class, new GameSerializer())
+                .registerTypeAdapter(ServerMessage.class, new ServerDeserializer()).create();
+    }
+
+    @OnOpen
+    public void onOpen(Session session, EndpointConfig endpointConfig) {
+
+    }
+
+    @OnMessage
+    public void onMessage(String message) {
+        try {
+            ServerMessage notification = gson.fromJson(message, ServerMessage.class);
+            notificationHandler.notify(notification);
+        } catch (Exception e) {
+            System.out.println("Error processing the ws message: " + e.getMessage());
         }
     }
 

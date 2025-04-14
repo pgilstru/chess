@@ -13,21 +13,20 @@ import websocket.messages.ServerMessage;
 
 public class GameplayUI implements NotificationHandler {
 
-    private final ChessBoard chessBoard;
+    private ChessBoard chessBoard;
     private final ChessGame.TeamColor playerColor;
-    private WebSocketFacade ws;
+    private final WebSocketFacade ws;
     private final String authToken;
     private final int gameID;
     private final ChessClient chessClient;
 
-    public GameplayUI(ChessBoard chessBoard, ChessGame.TeamColor playerColor, WebSocketFacade ws,
-                      String authToken, int gameID, ChessClient chessClient) {
-        this.chessBoard = chessBoard;
+    public GameplayUI(ChessGame.TeamColor playerColor,
+                      String authToken, int gameID, ChessClient chessClient, String url) {
         this.playerColor = playerColor;
-        this.ws = ws;
         this.authToken = authToken;
         this.gameID = gameID;
         this.chessClient = chessClient;
+        this.ws = new WebSocketFacade(url, this);
     }
 
     @Override
@@ -81,10 +80,6 @@ public class GameplayUI implements NotificationHandler {
                 }
             }
         }
-    }
-//
-    public void setWsFacade(WebSocketFacade ws) {
-        this.ws = ws;
     }
 
     // process user commands
@@ -166,7 +161,7 @@ public class GameplayUI implements NotificationHandler {
             ws.makeMove(authToken, gameID, chessMove);
 
             // redraw and print the chessboard
-            drawChessboard(chessBoard, playerColor);
+//            drawChessboard(chessBoard, playerColor);
             return "Move sent to server";
         } catch (IllegalArgumentException e) {
 //            throw new RuntimeException("Incorrect format.");

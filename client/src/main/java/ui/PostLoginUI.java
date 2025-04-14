@@ -19,29 +19,13 @@ public class PostLoginUI {
     private final ChessClient chessClient;
     private final ServerFacade server;
     private final String serverUrl;
-    private final NotificationHandler notificationHandler;
-    private WebSocketFacade ws;
     private Integer currGameID;
 
-    public PostLoginUI(ChessClient chessClient, ServerFacade server, String serverUrl, NotificationHandler notificationHandler) {
+    public PostLoginUI(ChessClient chessClient, ServerFacade server, String serverUrl) {
         this.chessClient = chessClient;
         this.server = server;
         this.serverUrl = serverUrl;
-        this.notificationHandler = notificationHandler;
         this.currGameID = null;
-    }
-
-    private void closeExistingWS() throws ResponseException {
-        if (ws != null) {
-            // verify there is a ws to close
-            try {
-                ws.leaveGame(server.getAuthToken(), currGameID);
-                ws = null;
-                currGameID = null;
-            } catch (Exception ex) {
-                throw new ResponseException(500, "Failed to close the websocket connection");
-            }
-        }
     }
 
     // process user commands
@@ -75,8 +59,6 @@ public class PostLoginUI {
     }
 
     private String logout() throws ResponseException{
-        closeExistingWS();
-
         // attempt to log out the user
         String authToken = server.getAuthToken();
         server.logout(authToken);
@@ -152,34 +134,7 @@ public class PostLoginUI {
             String authToken = server.getAuthToken();
             server.joinGame(joinRequest, authToken);
 
-            WebSocketFacade ws = new WebSocketFacade(serverUrl, notificationHandler);
-            ws.connectToGame(server.getAuthToken(), gameID);
-
-            // for the chessboard
-            ChessBoard chessBoard = new ChessBoard();
-            chessBoard.resetBoard();
-
-            // create gameplayUI stuff
-//            GameplayUI gameplayUI = new GameplayUI(chessBoard, playerColor, null, server.getAuthToken(), gameID, chessClient);
-            GameplayUI gameplayUI = new GameplayUI(chessBoard, playerColor, ws, server.getAuthToken(), gameID, chessClient);
-
-            System.out.println("Created gameplayUI with color: " + playerColor);
-
-            // create websocket connection w/ gameplayUI as notification handler
-//            System.out.println("Creating ws connection");
-//            this.ws = new WebSocketFacade(serverUrl, gameplayUI);
-//            System.out.println("connecting to game via ws");
-//            this.ws.connectToGame(server.getAuthToken(), gameID);
-//            System.out.println("ws connection est");
-//
-//            // update gameplay w/ websocket facade
-//            gameplayUI.setWsFacade(ws);
-
-            // transition to gameplay and set it in the chessClient
-            chessClient.setGameplayUI(gameplayUI);
-
-            // draw the initial chessboard
-            gameplayUI.redraw();
+            chessClient.connectGameplayUI(playerColor, gameID);
 
             return String.format("You successfully joined the game! gameID: " + gameID);
         } catch (NumberFormatException e) {
@@ -208,8 +163,6 @@ public class PostLoginUI {
                 throw new ResponseException(400, "Game wasn't found: " + gameID);
             }
 
-            closeExistingWS();
-
             // add user to the specified game
             AuthData authData = chessClient.getAuthData();
             String authToken = authData.authToken();
@@ -218,28 +171,12 @@ public class PostLoginUI {
                 throw new ResponseException(401, "Must be authenticated to observe a game");
             }
 
-            // show the chessboard (observers see it from the white player perspective)
-            ChessBoard chessBoard = new ChessBoard();
-            chessBoard.resetBoard();
-
             // set color to null to show they are an observer not a player
-            ChessGame.TeamColor color = null;
-
-            // websocket functionality
-            try {
-                ws = new WebSocketFacade(serverUrl, notificationHandler);
-                ws.connectToGame(authToken, gameID);
-                currGameID = gameID;
-            } catch (Exception ex) {
-                throw new ResponseException(500, "Failed to establish a connection with the websocket");
-            }
+            ChessGame.TeamColor playerColor = null;
 
             // transition to gameplay
-            GameplayUI gameplayUI = new GameplayUI(chessBoard, color, ws, authToken, gameID, chessClient);
-            chessClient.setGameplayUI(gameplayUI);
+            chessClient.connectGameplayUI(playerColor, gameID);
 
-            // draw the initial chessboard from white perspective
-            gameplayUI.redraw();
 
             return String.format("You are successfully observing the game! gameID: " + gameID);
         } catch (NumberFormatException e) {

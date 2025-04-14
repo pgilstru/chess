@@ -1,5 +1,6 @@
 package ui;
 
+import chess.ChessGame;
 import model.AuthData;
 import model.ResponseException;
 import server.ServerFacade;
@@ -11,17 +12,15 @@ public class ChessClient {
 
     private final ServerFacade server;
     private final String serverUrl;
-    private final NotificationHandler notificationHandler;
     private GameplayUI gameplayUI;
 
     // stores authData after logging in or registering
     private AuthData sessionAuthData;
 
-    public ChessClient(String serverUrl, NotificationHandler notificationHandler) {
+    public ChessClient(String serverUrl) {
         // initialize connection to the server
         server = new ServerFacade(serverUrl);
         this.serverUrl = serverUrl;
-        this.notificationHandler = notificationHandler;
         this.gameplayUI = null;
     }
 
@@ -41,7 +40,7 @@ public class ChessClient {
                 return result;
             } else {
                 // user is not logged in, use PostLoginUI
-                return new PostLoginUI(this, server, serverUrl, notificationHandler).eval(input);
+                return new PostLoginUI(this, server, serverUrl).eval(input);
             }
 
         } catch (ResponseException e) {
@@ -57,6 +56,15 @@ public class ChessClient {
 
     public AuthData getAuthData() {
         return sessionAuthData;
+    }
+
+    public void connectGameplayUI(ChessGame.TeamColor playerColor, int gameID) {
+        GameplayUI gameplayUI = new GameplayUI(playerColor, server.getAuthToken(), gameID, this, serverUrl);
+
+        System.out.println("Created gameplayUI with color: " + playerColor);
+
+        // transition to gameplay and set it in the chessClient
+        setGameplayUI(gameplayUI);
     }
 
     public void setGameplayUI(GameplayUI gameplayUI) {
@@ -90,10 +98,6 @@ public class ChessClient {
             // use blue for post and pre login '>>>'
             return EscapeSequences.SET_TEXT_COLOR_MAGENTA + ">>> ";
         }
-    }
-
-    public GameplayUI getGameplayUI() {
-        return gameplayUI;
     }
 
     @Override
