@@ -39,11 +39,6 @@ public class WebSocketFacade extends Endpoint {
         this.session = session;
     }
 
-    @OnClose
-    public void onClose(Session session, CloseReason closeReason) {
-        this.session = null;
-    }
-
     @OnMessage
     public void onMessage(String message) {
         try {
